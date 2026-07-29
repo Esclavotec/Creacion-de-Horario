@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constructor de Horarios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Playfair+Display:wght@500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg-app:#141925;
+  --panel:#1c2334;
+  --panel-alt:#242c42;
+  --border:#323d58;
+  --text:#e9edf7;
+  --text-dim:#8d97b3;
+  --accent:#f2a65a;
+  --accent-ink:#3a2510;
+  --accent-2:#4fd1c5;
+  --danger:#e76f6f;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-app);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+}
+h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+
+/* ---------- layout ---------- */
+#app{
+  display:flex;
+  min-height:100vh;
+}
+#sidebar{
+  width:340px;
+  min-width:340px;
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  padding:20px 18px 60px;
+  overflow-y:auto;
+  height:100vh;
+  position:sticky;
+  top:0;
+}
+#main{
+  flex:1;
+  padding:28px 36px 60px;
+  overflow-x:auto;
+}
+.brand{
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+  margin-bottom:4px;
+}
+.brand .mark{
+  width:12px;height:12px;border-radius:3px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  display:inline-block;
+}
+.brand h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-0.02em;}
+.brand-sub{color:var(--text-dim);font-size:12.5px;margin:0 0 22px;}
+
+/* topbar */
+#topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+}
+#titleInput{
+  font-family:'Space Grotesk',sans-serif;
+  font-size:26px;
+  font-weight:600;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  border-bottom:2px solid transparent;
+  padding:4px 2px;
+  min-width:280px;
+}
+#titleInput:focus{outline:none;border-bottom:2px solid var(--accent);}
+
+.btn{
+  font-family:'Inter',sans-serif;
+  font-size:13.5px;
+  font-weight:600;
+  border:1px solid var(--border);
+  background:var(--panel-alt);
+  color:var(--text);
+  padding:10px 16px;
+  border-radius:8px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  transition:transform .08s ease, border-color .15s ease;
+}
+.btn:hover{border-color:var(--accent);}
+.btn:active{transform:scale(.97);}
+.btn-accent{
+  background:var(--accent);
+  color:var(--accent-ink);
+  border-color:var(--accent);
+}
+.btn-accent:hover{filter:brightness(1.06);}
+.btn-ghost{background:transparent;}
+.btn-sm{padding:6px 10px;font-size:12px;border-radius:6px;}
+.btn-danger{color:var(--danger);border-color:var(--danger);background:transparent;}
+.dayModeToggle .btn{flex:1;justify-content:center;}
+.dayModeToggle .btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+
+/* sidebar sections */
+details.section{
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:12px;
+  background:var(--panel-alt);
+  overflow:hidden;
+}
+details.section[open] summary{border-bottom:1px solid var(--border);}
+details.section summary{
+  padding:12px 14px;
+  cursor:pointer;
+  font-weight:600;
+  font-size:13.5px;
+  list-style:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  user-select:none;
+}
+details.section summary::-webkit-details-marker{display:none;}
+details.section summary .chev{transition:transform .2s ease;color:var(--text-dim);}
+details.section[open] summary .chev{transform:rotate(90deg);}
+.section-body{padding:14px;display:flex;flex-direction:column;gap:10px;}
+
+label.field{
+  font-size:11.5px;
+  color:var(--text-dim);
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+input[type=text], input[type=time], input[type=number], input[type=date], select, textarea{
+  font-family:'Inter',sans-serif;
+  background:var(--bg-app);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:7px;
+  font-size:13.5px;
+  width:100%;
+}
+input[type=date]{
+  color-scheme:dark;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+}
+input[type=date]::-webkit-calendar-picker-indicator{
+  filter:invert(0.7) brightness(1.4);
+  cursor:pointer;
+}
+textarea{resize:vertical;min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dayToggles{display:flex;flex-wrap:wrap;gap:6px;}
+.dayToggle{
+  padding:6px 9px;border:1px solid var(--border);border-radius:6px;
+  font-size:12px;cursor:pointer;color:var(--text-dim);background:var(--bg-app);
+  user-select:none;
+}
+.dayToggle.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+
+.colorSwatchBtn{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid var(--border);background:var(--bg-app);
+  padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--text);font-size:13px;
+}
+.swatchDot{width:18px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,.25);flex-shrink:0;}
+
+.itemCard{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 10px;
+  background:var(--bg-app);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.itemCard .top{display:flex;align-items:center;gap:8px;}
+.itemCard .name{font-weight:600;font-size:13px;flex:1;}
+.itemCard .meta{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
+.itemCard .actions{display:flex;gap:6px;}
+.hint{font-size:11.5px;color:var(--text-dim);line-height:1.5;}
+.thumbRow{display:flex;align-items:center;gap:8px;}
+.thumb{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
+
+/* ---------- capture area (the poster / schedule) ---------- */
+#captureWrap{display:inline-block;}
+.capture-area{
+  position:relative;
+  background:#0f1420;
+  border-radius:14px;
+  overflow:hidden;
+  padding:28px 32px 34px;
+  min-width:760px;
+}
+.bg-layer{
+  position:absolute; inset:-20px;
+  overflow:hidden;
+  filter:blur(14px);
+  opacity:.55;
+  z-index:0;
+}
+.bg-img{
+  position:absolute;
+  display:block;
+  max-width:none;
+}
+.bg-tint{position:absolute;inset:0;background:rgba(15,20,32,.35);z-index:0;}
+.schedule-title{
+  position:relative;z-index:2;
+  font-size:28px;font-weight:700;letter-spacing:-.02em;
+  margin:0 0 18px;color:var(--sched-text,#fff);text-shadow:0 2px 12px rgba(0,0,0,.5);
+  outline:none;border-radius:6px;padding:2px 4px;margin-left:-4px;
+  cursor:text;
+  transition:box-shadow .15s ease;
+  font-family:inherit;
+}
+.schedule-title:hover{box-shadow:0 0 0 1px rgba(255,255,255,.25);}
+.schedule-title:focus{box-shadow:0 0 0 2px var(--accent);}
+.schedule-title:empty::before{
+  content:'Escribí el título del horario…';
+  color:rgba(255,255,255,.5);
+}
+.grid-wrap{
+  position:relative;z-index:2;display:flex;align-items:flex-start;
+}
+.grid-scroll{position:relative;}
+/* hour column: sits outside the bordered grid so labels are never clipped by a border */
+.time-col{flex-shrink:0;display:flex;flex-direction:column;}
+.time-col-header{flex-shrink:0;height:40px;}
+/* everything to the right of the hours (headers + day columns) shares one border,
+   which is what makes it "start after the hours" instead of wrapping them */
+.days-block{
+  border:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));
+  border-radius:4px;
+}
+.grid-header{display:flex;border-bottom:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
+.day-header{
+  flex-shrink:0;
+  height:40px;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;
+  font-family:inherit;
+  font-weight:600;
+  font-size:13px;
+  color:var(--sched-text,#fff);
+  padding:4px;
+  background:var(--grid-tint, rgba(255,255,255,.06));
+  backdrop-filter:blur(2px);
+}
+.day-header:not(:first-child){border-left:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
+.grid-body{position:relative;display:flex;}
+.time-labels{flex-shrink:0;position:relative;}
+.time-label{
+  display:flex;align-items:flex-start;justify-content:flex-end;
+  padding-right:10px;color:var(--sched-text-dim, rgba(255,255,255,.55));
+  font-family:inherit;font-size:11px;
+  white-space:nowrap;
+  transform:translateY(-6px);
+}
+.day-columns{position:relative;display:flex;}
+.day-col{
+  background:var(--grid-tint2, rgba(255,255,255,.025));
+  position:relative;
+}
+.day-col:not(:first-child){border-left:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
+.grid-line{position:absolute;left:0;right:0;border-top:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.08));}
+.blocks-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
+.block{
+  position:absolute;
+  border-radius:8px;
+  padding:6px 8px;
+  overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.25);
+  pointer-events:auto;
+}
+.block .bname{font-family:inherit;font-weight:600;font-size:12.5px;line-height:1.25;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.block .btime{font-family:inherit;font-size:10px;color:rgba(255,255,255,.85);margin-top:2px;}
+
+.footer-area{position:relative;z-index:2;margin-top:26px;}
+.weeks-area{position:relative;z-index:2;margin-top:20px;}
+.todo-area{position:relative;z-index:2;margin-top:20px;}
+.footer-section{margin-bottom:16px;}
+.footer-divider{border:none;border-top:1px dashed var(--grid-line, rgba(255,255,255,.25));margin:14px 0;}
+.footer-title{font-family:inherit;font-weight:700;font-size:15px;color:var(--sched-text,#fff);margin:0 0 2px;}
+.footer-sub{font-family:inherit;font-size:12px;color:var(--accent-2);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.footer-items{font-family:inherit;margin:0;padding-left:18px;color:var(--sched-text-dim, rgba(255,255,255,.85));font-size:12.5px;line-height:1.7;}
+
+/* attendance tracker inside footer */
+.attendance-block{font-family:inherit;}
+.attendance-head{font-weight:700;font-size:15px;color:var(--sched-text,#fff);margin:0 0 2px;}
+.attendance-req{font-size:12px;color:var(--accent-2);margin:0 0 8px;font-weight:600;}
+.attendance-weeks{display:flex;flex-wrap:wrap;gap:6px;}
+.week-chip{
+  display:flex;align-items:center;gap:6px;
+  font-family:inherit;font-size:11.5px;
+  padding:5px 9px;border-radius:6px;
+  background:var(--grid-tint2, rgba(255,255,255,.06));
+  border:1px solid var(--grid-line, rgba(255,255,255,.18));
+  color:var(--sched-text, #fff);
+  cursor:pointer;user-select:none;
+}
+.week-chip .box{
+  width:12px;height:12px;border-radius:3px;flex-shrink:0;
+  border:1.5px solid var(--sched-text, #fff);
+  display:flex;align-items:center;justify-content:center;
+}
+.week-chip.done .box{background:var(--accent-2);border-color:var(--accent-2);}
+.week-chip.done .box::after{content:'✓';font-size:9px;line-height:1;color:#0f1420;}
+.week-chip.done{opacity:.8;}
+
+/* todo checklist */
+.todo-block{font-family:inherit;}
+.todo-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.todo-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sched-text-dim, rgba(255,255,255,.9));cursor:pointer;user-select:none;}
+.todo-row .box{
+  width:15px;height:15px;border-radius:4px;flex-shrink:0;
+  border:1.5px solid var(--sched-text, #fff);
+  display:flex;align-items:center;justify-content:center;
+}
+.todo-row.done{color:var(--sched-text-dim, rgba(255,255,255,.55));text-decoration:line-through;}
+.todo-row.done .box{background:var(--accent-2);border-color:var(--accent-2);}
+.todo-row.done .box::after{content:'✓';font-size:10px;line-height:1;color:#0f1420;}
+
+/* weeks-cursed tracker */
+.weeks-block{font-family:inherit;}
+.weeks-grid{display:flex;flex-wrap:wrap;gap:6px;}
+.wk-chip{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-width:64px;
+  font-family:inherit;font-size:10.5px;
+  padding:6px 8px;border-radius:7px;
+  background:var(--grid-tint2, rgba(255,255,255,.06));
+  border:1px solid var(--grid-line, rgba(255,255,255,.18));
+  color:var(--sched-text, #fff);
+  cursor:pointer;user-select:none;text-align:center;
+}
+.wk-chip .wk-num{font-weight:700;font-size:11.5px;}
+.wk-chip .wk-date{font-size:9.5px;color:var(--sched-text-dim, rgba(255,255,255,.7));}
+.wk-chip.done{background:var(--accent-2);border-color:var(--accent-2);color:#0f1420;}
+.wk-chip.done .wk-date{color:rgba(15,20,32,.7);}
+
+.mini-toggle{display:flex;gap:6px;}
+.mini-toggle .btn{flex:1;justify-content:center;}
+.mini-toggle .btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+
+/* images layer over whole poster */
+.images-layer{position:absolute;inset:0;pointer-events:none;}
+.images-layer-back{z-index:1;}
+.images-layer-front{z-index:6;}
+.floating-img{
+  position:absolute;
+  pointer-events:auto;
+  cursor:grab;
+  border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+  border:2px solid rgba(255,255,255,.5);
+}
+.floating-img:active{cursor:grabbing;}
+.floating-img img{width:100%;height:100%;display:block;border-radius:6px;object-fit:cover;pointer-events:none;}
+.resize-handle{
+  position:absolute;right:-6px;bottom:-6px;width:16px;height:16px;
+  background:var(--accent);border-radius:50%;border:2px solid #fff;cursor:nwse-resize;
+}
+.rotate-handle{
+  position:absolute;left:50%;top:-26px;width:16px;height:16px;
+  transform:translateX(-50%);
+  background:var(--accent-2);border-radius:50%;border:2px solid #fff;cursor:grab;
+}
+.rotate-handle::after{
+  content:'';position:absolute;left:50%;top:100%;width:2px;height:10px;
+  background:rgba(255,255,255,.6);transform:translateX(-50%);
+}
+.remove-handle{
+  position:absolute;left:-8px;top:-8px;width:20px;height:20px;
+  background:var(--danger);color:#fff;border-radius:50%;border:2px solid #fff;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;
+}
+
+/* ---------- color picker popover ---------- */
+#colorPopover{
+  position:fixed;
+  z-index:1000;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+  width:250px;
+  display:none;
+}
+#colorPopover.open{display:block;}
+.wheelWrap{position:relative;width:200px;height:200px;margin:0 auto 10px;}
+#hueWheel{border-radius:50%;cursor:crosshair;}
+.wheelMarker{
+  position:absolute;width:14px;height:14px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4);
+  transform:translate(-50%,-50%);pointer-events:none;
+}
+.lightRow{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.lightRow input[type=range]{flex:1;}
+.hexRow{display:flex;gap:8px;margin-bottom:10px;}
+.hexRow input{flex:1;}
+.previewSwatch{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;}
+.presetRow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.presetDot{width:20px;height:20px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.3);}
+
+#dropZoneNote{font-size:11px;color:var(--text-dim);}
+.slider-line{display:flex;align-items:center;gap:8px;}
+.slider-line input[type=range]{flex:1;}
+.slider-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);width:34px;text-align:right;}
+
+@media (max-width: 900px){
+  #app{flex-direction:column;}
+  #sidebar{width:100%;height:auto;position:relative;}
+  #main{padding:20px;}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand"><span class="mark"></span><h1>Constructor de Horarios</h1></div>
+    <p class="brand-sub">Armá tu planilla, agregá bloques, imágenes y descargala como imagen.</p>
+
+    <details class="section" open>
+      <summary>Días y horas <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field">Días visibles</label>
+        <div class="dayToggles" id="dayToggles"></div>
+        <div class="row2">
+          <label class="field">Desde
+            <input type="time" id="gridStart" value="07:00">
+          </label>
+          <label class="field">Hasta
+            <input type="time" id="gridEnd" value="18:00">
+          </label>
+        </div>
+        <label class="field">Intervalo de la cuadrícula
+          <select id="interval">
+            <option value="60">1 hora</option>
+            <option value="30">30 minutos</option>
+          </select>
+        </label>
+      </div>
+    </details>
+
+    <details class="section" open>
+      <summary>Bloques <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field">Nombre
+          <input type="text" id="blockName" placeholder="Ej. Matemáticas">
+        </label>
+        <label class="field">¿Cómo elegís los días?</label>
+        <div class="dayModeToggle" style="display:flex;gap:6px;">
+          <button type="button" class="btn btn-sm" id="modeRangeBtn" data-mode="range">Días seguidos</button>
+          <button type="button" class="btn btn-sm" id="modeCustomBtn" data-mode="custom">Días específicos</button>
+        </div>
+
+        <div class="row2" id="rangeDayFields">
+          <label class="field">Día desde
+            <select id="blockDayFrom"></select>
+          </label>
+          <label class="field">Día hasta
+            <select id="blockDayTo"></select>
+          </label>
+        </div>
+
+        <div id="customDayFields" style="display:none;">
+          <label class="field">Elegí los días (podés marcar varios sueltos)</label>
+          <div class="dayToggles" id="blockCustomDayToggles"></div>
+        </div>
+        <div class="row2">
+          <label class="field">Hora desde
+            <input type="time" id="blockTimeFrom" value="08:00">
+          </label>
+          <label class="field">Hora hasta
+            <input type="time" id="blockTimeTo" value="09:00">
+          </label>
+        </div>
+        <label class="field">Color del bloque</label>
+        <button class="colorSwatchBtn" id="blockColorBtn" type="button">
+          <span class="swatchDot" id="blockColorDot" style="background:#f2a65a"></span>
+          <span id="blockColorHex">#F2A65A</span>
+        </button>
+        <button class="btn btn-accent" id="addBlockBtn" type="button">+ Agregar bloque</button>
+        <p class="hint">Para repetir el mismo bloque en otro día u horario, usá "Duplicar" en la lista y ajustá el día/hora de la copia.</p>
+        <div id="blockList"></div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Imágenes <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="btn btn-ghost" style="justify-content:center;">
+          Subir imagen
+          <input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
+        </label>
+        <p class="hint">Arrastrá las imágenes sobre la planilla para moverlas, la esquina inferior para cambiar el tamaño, y el punto de arriba para rotarlas. Debajo de cada miniatura podés ajustar opacidad y si va delante o detrás del horario.</p>
+        <div id="imgList"></div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Fondo <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="btn btn-ghost" style="justify-content:center;">
+          Subir imagen de fondo
+          <input type="file" id="bgInput" accept="image/*" style="display:none;">
+        </label>
+        <div id="bgThumbRow" class="thumbRow" style="display:none;">
+          <img id="bgThumb" class="thumb">
+          <button class="btn btn-sm btn-danger" id="removeBgBtn" type="button">Quitar</button>
+        </div>
+        <label class="field">Desenfoque
+          <div class="slider-line">
+            <input type="range" id="bgBlur" min="0" max="24" value="14">
+            <span class="slider-val" id="bgBlurVal">14px</span>
+          </div>
+        </label>
+        <label class="field">Oscurecer
+          <div class="slider-line">
+            <input type="range" id="bgTint" min="0" max="80" value="35">
+            <span class="slider-val" id="bgTintVal">35%</span>
+          </div>
+        </label>
+        <p class="hint">Recortá y acomodá la foto de fondo antes de descargar: acercá con el zoom y moví la posición. Se ve en vivo sobre la planilla.</p>
+        <label class="field">Zoom
+          <div class="slider-line">
+            <input type="range" id="bgZoom" min="100" max="300" value="108">
+            <span class="slider-val" id="bgZoomVal">108%</span>
+          </div>
+        </label>
+        <label class="field">Posición horizontal
+          <div class="slider-line">
+            <input type="range" id="bgPosX" min="0" max="100" value="50">
+            <span class="slider-val" id="bgPosXVal">50%</span>
+          </div>
+        </label>
+        <label class="field">Posición vertical
+          <div class="slider-line">
+            <input type="range" id="bgPosY" min="0" max="100" value="50">
+            <span class="slider-val" id="bgPosYVal">50%</span>
+          </div>
+        </label>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Estilo de la planilla <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field">Color de fondo de la planilla</label>
+        <button class="colorSwatchBtn" id="posterBgBtn" type="button">
+          <span class="swatchDot" id="posterBgDot" style="background:#0f1420"></span>
+          <span id="posterBgHex">#0F1420</span>
+        </button>
+
+        <label class="field">Color del borde</label>
+        <button class="colorSwatchBtn" id="borderColorBtn" type="button">
+          <span class="swatchDot" id="borderColorDot" style="background:#323d58"></span>
+          <span id="borderColorHex">#323D58</span>
+        </button>
+        <label class="field">Grosor del borde
+          <div class="slider-line">
+            <input type="range" id="borderWidth" min="0" max="12" value="0">
+            <span class="slider-val" id="borderWidthVal">0px</span>
+          </div>
+        </label>
+
+        <label class="field">Color de la cuadrícula</label>
+        <button class="colorSwatchBtn" id="gridColorBtn" type="button">
+          <span class="swatchDot" id="gridColorDot" style="background:#ffffff"></span>
+          <span id="gridColorHex">#FFFFFF</span>
+        </button>
+        <label class="field">Grosor de las líneas de la cuadrícula
+          <div class="slider-line">
+            <input type="range" id="gridLineWidth" min="1" max="6" value="1">
+            <span class="slider-val" id="gridLineWidthVal">1px</span>
+          </div>
+        </label>
+
+        <label class="field">Color de los textos</label>
+        <button class="colorSwatchBtn" id="textColorBtn" type="button">
+          <span class="swatchDot" id="textColorDot" style="background:#ffffff"></span>
+          <span id="textColorHex">#FFFFFF</span>
+        </button>
+
+        <label class="field">Tipo de letra
+          <select id="fontSelect">
+            <option value="'Space Grotesk', sans-serif">Sans (Space Grotesk)</option>
+            <option value="'Inter', sans-serif">Sans (Inter)</option>
+            <option value="'Poppins', sans-serif">Redondeada (Poppins)</option>
+            <option value="'Playfair Display', serif">Serif elegante (Playfair)</option>
+            <option value="Georgia, serif">Serif clásica (Georgia)</option>
+            <option value="'IBM Plex Mono', monospace">Monoespaciada</option>
+          </select>
+        </label>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Pie de página <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field">Tipo de sección</label>
+        <div class="mini-toggle">
+          <button type="button" class="btn btn-sm active" id="footTypeTextBtn" data-ftype="text">Texto libre</button>
+          <button type="button" class="btn btn-sm" id="footTypeAttBtn" data-ftype="attendance">Asistencia / horas</button>
+        </div>
+
+        <div id="footTextFields">
+          <label class="field">Título de la sección
+            <input type="text" id="footTitle" placeholder="Ej. Observaciones">
+          </label>
+          <label class="field">Subtítulo
+            <input type="text" id="footSub" placeholder="Ej. Recordatorios">
+          </label>
+          <label class="field">Ítems (uno por línea)
+            <textarea id="footItems" placeholder="Traer materiales de arte&#10;Reunión de padres el viernes"></textarea>
+          </label>
+        </div>
+
+        <div id="footAttFields" style="display:none;">
+          <label class="field">Título
+            <input type="text" id="footAttTitle" placeholder="Ej. Asistencia Promates" value="Asistencia Promates">
+          </label>
+          <label class="field">Horas que hay que llevar (texto libre)
+            <input type="text" id="footAttHours" placeholder="Ej. 40 horas en total">
+          </label>
+          <label class="field">Cantidad de semanas a llevar
+            <input type="number" id="footAttWeeks" min="1" max="52" value="12">
+          </label>
+          <p class="hint">Se genera un casillero por cada semana (Semana 1, Semana 2…) que podés marcar como cumplida haciendo clic sobre la planilla.</p>
+        </div>
+
+        <label class="field" style="flex-direction:row;align-items:center;gap:6px;">
+          <input type="checkbox" id="footDivider" style="width:auto;" checked> Agregar línea divisoria antes
+        </label>
+        <button class="btn btn-accent" id="addFootBtn" type="button">+ Agregar sección</button>
+        <div id="footList"></div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Pendientes <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field">Nueva tarea
+          <input type="text" id="todoInput" placeholder="Ej. Traer el uniforme">
+        </label>
+        <button class="btn btn-accent" id="addTodoBtn" type="button">+ Agregar pendiente</button>
+        <p class="hint">Se muestran como lista con casillero. Marcalas como completas haciendo clic sobre la planilla o desde acá.</p>
+        <div id="todoListSidebar"></div>
+      </div>
+    </details>
+
+    <details class="section">
+      <summary>Semanas cursadas <span class="chev">›</span></summary>
+      <div class="section-body">
+        <label class="field" style="flex-direction:row;align-items:center;gap:6px;">
+          <input type="checkbox" id="weeksEnabled" style="width:auto;"> Mostrar en la planilla
+        </label>
+        <div class="row2">
+          <label class="field">Semana 1 empieza el
+            <input type="date" id="weeksStart">
+          </label>
+          <label class="field">Cantidad de semanas
+            <input type="number" id="weeksCount" min="1" max="52" value="21">
+          </label>
+        </div>
+        <p class="hint">Marcá cada semana como completa haciendo clic sobre su casillero en la planilla.</p>
+      </div>
+    </details>
+  </aside>
+
+  <main id="main">
+    <div id="topbar">
+      <input id="titleInput" type="text" value="Mi Horario Semanal">
+      <button class="btn btn-accent" id="downloadBtn">⬇ Descargar imagen</button>
+    </div>
+
+    <div id="captureWrap">
+      <div class="capture-area" id="captureArea">
+        <div class="bg-layer" id="bgLayer"><img id="bgImgEl" class="bg-img" alt=""></div>
+        <div class="bg-tint" id="bgTintLayer"></div>
+        <div class="images-layer images-layer-back" id="imagesLayerBack"></div>
+        <h2 class="schedule-title" id="titleDisplay" contenteditable="true" spellcheck="false">Mi Horario Semanal</h2>
+        <div class="grid-wrap" id="gridWrap"></div>
+        <div class="footer-area" id="footerArea"></div>
+        <div class="weeks-area" id="weeksArea"></div>
+        <div class="todo-area" id="todoArea"></div>
+        <div class="images-layer images-layer-front" id="imagesLayerFront"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="colorPopover">
+  <div class="wheelWrap">
+    <canvas id="hueWheel" width="200" height="200"></canvas>
+    <div class="wheelMarker" id="wheelMarker"></div>
+  </div>
+  <div class="lightRow">
+    <span class="mono" style="font-size:11px;color:var(--text-dim);">Luz</span>
+    <input type="range" id="lightSlider" min="0" max="100" value="55">
+  </div>
+  <div class="hexRow">
+    <div class="previewSwatch" id="previewSwatch"></div>
+    <input type="text" id="hexInput" value="#F2A65A">
+  </div>
+  <div class="presetRow" id="presetRow"></div>
+  <button class="btn btn-accent" id="useColorBtn" type="button" style="width:100%;justify-content:center;">Usar color</button>
+</div>
+
+<script>
+(function(){
+
+const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const CELL_W = 130, ROW_H = 30, HEADER_H = 40, TIME_COL_W = 68;
+
+let state = {
+  activeDays: [0,1,2,3,4],
+  gridStart: 7*60,
+  gridEnd: 18*60,
+  interval: 60,
+  gridLineWidth: 1,
+  blocks: [],
+  images: [],
+  bgSrc: null,
+  bgImgW: null,
+  bgImgH: null,
+  bgBlur: 14,
+  bgTint: 35,
+  bgZoom: 108,
+  bgPosX: 50,
+  bgPosY: 50,
+  footerSections: [],
+  todos: [],
+  weeksEnabled: false,
+  weeksStart: '',
+  weeksCount: 21,
+  weeksDone: [],
+  title: 'Mi Horario Semanal',
+  posterBg: '#0F1420',
+  borderColor: '#323D58',
+  borderWidth: 0,
+  gridColor: '#FFFFFF',
+  textColor: '#FFFFFF',
+  fontFamily: "'Space Grotesk', sans-serif"
+};
+let idCounter = 1;
+function nextId(){ return 'id' + (idCounter++); }
+
+function timeToMin(str){
+  const [h,m] = str.split(':').map(Number);
+  return h*60+m;
+}
+function minToTime(min){
+  const h = Math.floor(min/60), m = min%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function fmtLabel(min){
+  const h = Math.floor(min/60), m = min%60;
+  const suffix = h < 12 ? 'am' : 'pm';
+  let h12 = h % 12; if(h12===0) h12=12;
+  return h12 + (m ? ':'+String(m).padStart(2,'0') : '') + suffix;
+}
+
+/* ---------------- day toggles ---------------- */
+const dayTogglesEl = document.getElementById('dayToggles');
+function renderDayToggles(){
+  dayTogglesEl.innerHTML = '';
+  DAY_NAMES.forEach((name, i) => {
+    const el = document.createElement('div');
+    el.className = 'dayToggle' + (state.activeDays.includes(i) ? ' active' : '');
+    el.textContent = name.slice(0,3);
+    el.onclick = () => {
+      if(state.activeDays.includes(i)){
+        state.activeDays = state.activeDays.filter(d => d !== i);
+      } else {
+        state.activeDays.push(i);
+        state.activeDays.sort((a,b)=>a-b);
+      }
+      renderDayToggles();
+      populateDaySelects();
+      renderBlockCustomDayToggles();
+      renderAll();
+    };
+    dayTogglesEl.appendChild(el);
+  });
+}
+
+/* ---------------- day selects for block form ---------------- */
+const blockDayFrom = document.getElementById('blockDayFrom');
+const blockDayTo = document.getElementById('blockDayTo');
+let blockDayMode = 'range';
+let blockCustomDays = new Set();
+
+const modeRangeBtn = document.getElementById('modeRangeBtn');
+const modeCustomBtn = document.getElementById('modeCustomBtn');
+const rangeDayFields = document.getElementById('rangeDayFields');
+const customDayFields = document.getElementById('customDayFields');
+
+function setBlockDayMode(mode){
+  blockDayMode = mode;
+  modeRangeBtn.classList.toggle('active', mode === 'range');
+  modeCustomBtn.classList.toggle('active', mode === 'custom');
+  rangeDayFields.style.display = mode === 'range' ? 'grid' : 'none';
+  customDayFields.style.display = mode === 'custom' ? 'block' : 'none';
+}
+modeRangeBtn.onclick = () => setBlockDayMode('range');
+modeCustomBtn.onclick = () => setBlockDayMode('custom');
+setBlockDayMode('range');
+
+function renderBlockCustomDayToggles(){
+  const wrap = document.getElementById('blockCustomDayToggles');
+  wrap.innerHTML = '';
+  // drop selections for days that are no longer active
+  blockCustomDays.forEach(d => { if(!state.activeDays.includes(d)) blockCustomDays.delete(d); });
+  state.activeDays.forEach(i => {
+    const el = document.createElement('div');
+    el.className = 'dayToggle' + (blockCustomDays.has(i) ? ' active' : '');
+    el.textContent = DAY_NAMES[i].slice(0,3);
+    el.onclick = () => {
+      if(blockCustomDays.has(i)) blockCustomDays.delete(i); else blockCustomDays.add(i);
+      renderBlockCustomDayToggles();
+    };
+    wrap.appendChild(el);
+  });
+}
+
+function populateDaySelects(){
+  [blockDayFrom, blockDayTo].forEach(sel => {
+    const prev = sel.value;
+    sel.innerHTML = '';
+    state.activeDays.forEach(i => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = DAY_NAMES[i];
+      sel.appendChild(opt);
+    });
+    if(state.activeDays.includes(Number(prev))) sel.value = prev;
+  });
+  if(blockDayTo.selectedIndex < blockDayFrom.selectedIndex){
+    blockDayTo.selectedIndex = blockDayFrom.selectedIndex;
+  }
+}
+
+/* ---------------- color popover ---------------- */
+const popover = document.getElementById('colorPopover');
+const hueCanvas = document.getElementById('hueWheel');
+const wheelMarker = document.getElementById('wheelMarker');
+const lightSlider = document.getElementById('lightSlider');
+const hexInput = document.getElementById('hexInput');
+const previewSwatch = document.getElementById('previewSwatch');
+const presetRow = document.getElementById('presetRow');
+const PRESETS = ['#F2A65A','#4FD1C5','#E76F6F','#8E7CFF','#5AC1F2','#F2D95A','#6FE7A0','#E76FBF','#A0A8C0','#FFFFFF'];
+PRESETS.forEach(c => {
+  const d = document.createElement('div');
+  d.className = 'presetDot';
+  d.style.background = c;
+  d.onclick = () => setColorFromHex(c);
+  presetRow.appendChild(d);
+});
+
+let pickerState = { hue: 30, sat: 0.75, light: 0.65 };
+let colorTarget = null; // callback receiving hex
+
+function hslToRgb(h, s, l){
+  let r,g,b;
+  if(s===0){ r=g=b=l; }
+  else{
+    const hue2rgb=(p,q,t)=>{
+      if(t<0)t+=1; if(t>1)t-=1;
+      if(t<1/6) return p+(q-p)*6*t;
+      if(t<1/2) return q;
+      if(t<2/3) return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    const q = l<0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3);
+    g = hue2rgb(p,q,h);
+    b = hue2rgb(p,q,h-1/3);
+  }
+  return [Math.round(r*255),Math.round(g*255),Math.round(b*255)];
+}
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){ h=s=0; }
+  else{
+    const d=max-min;
+    s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max){
+      case r: h=(g-b)/d+(g<b?6:0); break;
+      case g: h=(b-r)/d+2; break;
+      case b: h=(r-g)/d+4; break;
+    }
+    h/=6;
+  }
+  return [h,s,l];
+}
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16);
+  return [(num>>16)&255,(num>>8)&255,num&255];
+}
+function rgbToHex(r,g,b){
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function hexToRgba(hex, alpha){
+  const [r,g,b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function drawWheel(){
+  const ctx = hueCanvas.getContext('2d');
+  const w = hueCanvas.width, h = hueCanvas.height, r = w/2;
+  const img = ctx.createImageData(w,h);
+  const light = pickerState.light;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const dx = x-r, dy = y-r;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const idx = (y*w+x)*4;
+      if(dist<=r){
+        let angle = Math.atan2(dy,dx)*180/Math.PI; if(angle<0) angle+=360;
+        const sat = Math.min(dist/r,1);
+        const [rr,gg,bb] = hslToRgb(angle/360, sat, light);
+        img.data[idx]=rr; img.data[idx+1]=gg; img.data[idx+2]=bb; img.data[idx+3]=255;
+      } else {
+        img.data[idx+3]=0;
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+function updateMarkerPos(){
+  const r = 100;
+  const angleRad = pickerState.hue * Math.PI/180;
+  const dist = pickerState.sat * r;
+  const x = r + Math.cos(angleRad)*dist;
+  const y = r + Math.sin(angleRad)*dist;
+  wheelMarker.style.left = x + 'px';
+  wheelMarker.style.top = y + 'px';
+}
+function updatePreview(){
+  const [r,g,b] = hslToRgb(pickerState.hue/360, pickerState.sat, pickerState.light);
+  const hex = rgbToHex(r,g,b);
+  previewSwatch.style.background = hex;
+  hexInput.value = hex;
+}
+function setColorFromHex(hex){
+  const [r,g,b] = hexToRgb(hex);
+  const [h,s,l] = rgbToHsl(r,g,b);
+  pickerState.hue = h*360; pickerState.sat = s; pickerState.light = l;
+  lightSlider.value = Math.round(l*100);
+  drawWheel(); updateMarkerPos(); updatePreview();
+}
+function pickAt(clientX, clientY){
+  const rect = hueCanvas.getBoundingClientRect();
+  const x = clientX - rect.left, y = clientY - rect.top;
+  const r = rect.width/2;
+  const dx = x-r, dy = y-r;
+  let dist = Math.sqrt(dx*dx+dy*dy);
+  dist = Math.min(dist, r);
+  let angle = Math.atan2(dy,dx)*180/Math.PI; if(angle<0) angle+=360;
+  pickerState.hue = angle;
+  pickerState.sat = dist/r;
+  updateMarkerPos(); updatePreview();
+}
+let wheelDragging = false;
+hueCanvas.addEventListener('pointerdown', e => { wheelDragging=true; pickAt(e.clientX,e.clientY); });
+window.addEventListener('pointermove', e => { if(wheelDragging) pickAt(e.clientX,e.clientY); });
+window.addEventListener('pointerup', () => wheelDragging=false);
+lightSlider.addEventListener('input', () => {
+  pickerState.light = lightSlider.value/100;
+  drawWheel(); updatePreview();
+});
+hexInput.addEventListener('change', () => {
+  if(/^#?[0-9a-fA-F]{6}$/.test(hexInput.value)){
+    setColorFromHex(hexInput.value.startsWith('#') ? hexInput.value : '#'+hexInput.value);
+  }
+});
+
+function openColorPicker(anchorEl, initialHex, onPick){
+  colorTarget = onPick;
+  setColorFromHex(initialHex || '#F2A65A');
+  const rect = anchorEl.getBoundingClientRect();
+  let top = rect.bottom + 8, left = rect.left;
+  if(left + 250 > window.innerWidth) left = window.innerWidth - 262;
+  if(top + 420 > window.innerHeight) top = Math.max(10, window.innerHeight - 430);
+  popover.style.top = top+'px';
+  popover.style.left = left+'px';
+  popover.classList.add('open');
+}
+document.getElementById('useColorBtn').onclick = () => {
+  if(colorTarget) colorTarget(hexInput.value);
+  popover.classList.remove('open');
+};
+document.addEventListener('click', (e) => {
+  if(popover.classList.contains('open') && !popover.contains(e.target) && !e.target.closest('.colorSwatchBtn')){
+    popover.classList.remove('open');
+  }
+});
+
+/* ---------------- block form ---------------- */
+let pendingBlockColor = '#F2A65A';
+const blockColorBtn = document.getElementById('blockColorBtn');
+const blockColorDot = document.getElementById('blockColorDot');
+const blockColorHex = document.getElementById('blockColorHex');
+blockColorBtn.onclick = () => {
+  openColorPicker(blockColorBtn, pendingBlockColor, (hex) => {
+    pendingBlockColor = hex;
+    blockColorDot.style.background = hex;
+    blockColorHex.textContent = hex.toUpperCase();
+  });
+};
+
+document.getElementById('addBlockBtn').onclick = () => {
+  const name = document.getElementById('blockName').value.trim();
+  if(!name){ alert('Ponele un nombre al bloque.'); return; }
+  let tFrom = timeToMin(document.getElementById('blockTimeFrom').value);
+  let tTo = timeToMin(document.getElementById('blockTimeTo').value);
+  if(tFrom >= tTo){ alert('La hora "hasta" debe ser mayor que "desde".'); return; }
+
+  const block = {
+    id: nextId(), name, color: pendingBlockColor,
+    timeFrom: tFrom, timeTo: tTo, dayMode: blockDayMode
+  };
+
+  if(blockDayMode === 'range'){
+    let dayFrom = Number(blockDayFrom.value), dayTo = Number(blockDayTo.value);
+    if(dayFrom > dayTo) [dayFrom,dayTo] = [dayTo,dayFrom];
+    block.dayFrom = dayFrom;
+    block.dayTo = dayTo;
+  } else {
+    if(blockCustomDays.size === 0){ alert('Marcá al menos un día.'); return; }
+    block.days = [...blockCustomDays].sort((a,b)=>a-b);
+  }
+
+  state.blocks.push(block);
+  document.getElementById('blockName').value = '';
+  renderBlockList();
+  renderAll();
+};
+
+function blockDaysLabel(b){
+  if(b.dayMode === 'custom'){
+    return b.days.map(d => DAY_NAMES[d].slice(0,3)).join(', ');
+  }
+  return DAY_NAMES[b.dayFrom].slice(0,3) + (b.dayFrom !== b.dayTo ? '–'+DAY_NAMES[b.dayTo].slice(0,3) : '');
+}
+
+function renderBlockList(){
+  const list = document.getElementById('blockList');
+  list.innerHTML = '';
+  if(state.blocks.length===0){
+    list.innerHTML = '<p class="hint">Todavía no agregaste bloques.</p>';
+    return;
+  }
+  state.blocks.forEach(b => {
+    const card = document.createElement('div');
+    card.className = 'itemCard';
+    card.innerHTML = `
+      <div class="top">
+        <span class="swatchDot" style="background:${b.color}"></span>
+        <span class="name">${escapeHtml(b.name)}</span>
+      </div>
+      <div class="meta">${blockDaysLabel(b)} · ${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>
+      <div class="actions">
+        <button class="btn btn-sm" data-act="dup">Duplicar</button>
+        <button class="btn btn-sm" data-act="edit">Editar</button>
+        <button class="btn btn-sm btn-danger" data-act="del">Eliminar</button>
+      </div>`;
+    card.querySelector('[data-act=dup]').onclick = () => {
+      state.blocks.push({...b, id: nextId()});
+      renderBlockList(); renderAll();
+    };
+    card.querySelector('[data-act=del]').onclick = () => {
+      state.blocks = state.blocks.filter(x => x.id !== b.id);
+      renderBlockList(); renderAll();
+    };
+    card.querySelector('[data-act=edit]').onclick = () => {
+      document.getElementById('blockName').value = b.name;
+      if(b.dayMode === 'custom'){
+        setBlockDayMode('custom');
+        blockCustomDays = new Set(b.days);
+        renderBlockCustomDayToggles();
+      } else {
+        setBlockDayMode('range');
+        blockDayFrom.value = b.dayFrom; blockDayTo.value = b.dayTo;
+      }
+      document.getElementById('blockTimeFrom').value = minToTime(b.timeFrom);
+      document.getElementById('blockTimeTo').value = minToTime(b.timeTo);
+      pendingBlockColor = b.color;
+      blockColorDot.style.background = b.color;
+      blockColorHex.textContent = b.color.toUpperCase();
+      state.blocks = state.blocks.filter(x => x.id !== b.id);
+      renderBlockList(); renderAll();
+    };
+    list.appendChild(card);
+  });
+}
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+/* ---------------- images ---------------- */
+document.getElementById('imgInput').addEventListener('change', (e) => {
+  [...e.target.files].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.images.push({
+        id: nextId(), src: reader.result,
+        x: 20 + Math.random()*40, y: 20 + Math.random()*40,
+        w: 120, h: 120, rot: 0, opacity: 100, layer: 'front'
+      });
+      renderImageList(); renderImagesLayer();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+});
+function renderImageList(){
+  const list = document.getElementById('imgList');
+  list.innerHTML = '';
+  if(state.images.length===0){
+    list.innerHTML = '<p class="hint">No hay imágenes agregadas.</p>';
+    return;
+  }
+  state.images.forEach(im => {
+    const row = document.createElement('div');
+    row.className = 'itemCard';
+    row.innerHTML = `
+      <div class="thumbRow">
+        <img class="thumb" src="${im.src}">
+        <button class="btn btn-sm btn-danger" style="margin-left:auto;" data-act="del">Quitar</button>
+      </div>
+      <label class="field">Opacidad
+        <div class="slider-line">
+          <input type="range" class="imgOpacity" min="5" max="100" value="${im.opacity}">
+          <span class="slider-val imgOpacityVal">${im.opacity}%</span>
+        </div>
+      </label>
+      <label class="field">Rotación
+        <div class="slider-line">
+          <input type="range" class="imgRot" min="0" max="360" value="${im.rot}">
+          <span class="slider-val imgRotVal">${im.rot}°</span>
+        </div>
+      </label>
+      <div class="mini-toggle">
+        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?'':' active'}" data-layer="front">Delante del horario</button>
+        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?' active':''}" data-layer="back">Detrás del horario</button>
+      </div>`;
+    row.querySelector('[data-act=del]').onclick = () => {
+      state.images = state.images.filter(x => x.id !== im.id);
+      renderImageList(); renderImagesLayer();
+    };
+    row.querySelector('.imgOpacity').addEventListener('input', (e) => {
+      im.opacity = Number(e.target.value);
+      row.querySelector('.imgOpacityVal').textContent = im.opacity + '%';
+      renderImagesLayer();
+    });
+    row.querySelector('.imgRot').addEventListener('input', (e) => {
+      im.rot = Number(e.target.value);
+      row.querySelector('.imgRotVal').textContent = im.rot + '°';
+      renderImagesLayer();
+    });
+    row.querySelectorAll('.imgLayerBtn').forEach(btn => {
+      btn.onclick = () => {
+        im.layer = btn.dataset.layer;
+        renderImageList(); renderImagesLayer();
+      };
+    });
+    list.appendChild(row);
+  });
+}
+
+function renderImagesLayer(){
+  const layerBack = document.getElementById('imagesLayerBack');
+  const layerFront = document.getElementById('imagesLayerFront');
+  layerBack.innerHTML = '';
+  layerFront.innerHTML = '';
+  state.images.forEach(im => {
+    const layer = im.layer === 'back' ? layerBack : layerFront;
+    const el = document.createElement('div');
+    el.className = 'floating-img';
+    el.style.left = im.x+'px';
+    el.style.top = im.y+'px';
+    el.style.width = im.w+'px';
+    el.style.height = im.h+'px';
+    el.style.opacity = (im.opacity/100);
+    el.style.transform = `rotate(${im.rot}deg)`;
+    el.innerHTML = `<img src="${im.src}">
+      <div class="remove-handle" title="Quitar">×</div>
+      <div class="rotate-handle" title="Rotar"></div>
+      <div class="resize-handle" title="Cambiar tamaño"></div>`;
+    // drag
+    let dragging=false, startX, startY, origX, origY;
+    el.addEventListener('pointerdown', (e) => {
+      if(e.target.classList.contains('resize-handle') || e.target.classList.contains('remove-handle') || e.target.classList.contains('rotate-handle')) return;
+      dragging = true; startX = e.clientX; startY = e.clientY;
+      origX = im.x; origY = im.y;
+      el.setPointerCapture(e.pointerId);
+    });
+    el.addEventListener('pointermove', (e) => {
+      if(!dragging) return;
+      im.x = origX + (e.clientX - startX);
+      im.y = origY + (e.clientY - startY);
+      el.style.left = im.x+'px'; el.style.top = im.y+'px';
+    });
+    el.addEventListener('pointerup', () => dragging=false);
+    // resize
+    const handle = el.querySelector('.resize-handle');
+    let resizing=false, rStartX, rStartY, origW, origH;
+    handle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      resizing = true; rStartX = e.clientX; rStartY = e.clientY;
+      origW = im.w; origH = im.h;
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if(!resizing) return;
+      im.w = Math.max(30, origW + (e.clientX - rStartX));
+      im.h = Math.max(30, origH + (e.clientY - rStartY));
+      el.style.width = im.w+'px'; el.style.height = im.h+'px';
+    });
+    handle.addEventListener('pointerup', () => resizing=false);
+    // rotate
+    const rotHandle = el.querySelector('.rotate-handle');
+    let rotating=false;
+    rotHandle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      rotating = true;
+      rotHandle.setPointerCapture(e.pointerId);
+    });
+    rotHandle.addEventListener('pointermove', (e) => {
+      if(!rotating) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+      let angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180/Math.PI + 90;
+      angle = ((angle % 360) + 360) % 360;
+      im.rot = Math.round(angle);
+      el.style.transform = `rotate(${im.rot}deg)`;
+    });
+    rotHandle.addEventListener('pointerup', () => { rotating=false; renderImagesLayer(); });
+    // remove
+    el.querySelector('.remove-handle').addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      state.images = state.images.filter(x => x.id !== im.id);
+      renderImageList(); renderImagesLayer();
+    });
+    layer.appendChild(el);
+  });
+}
+
+/* ---------------- background ---------------- */
+document.getElementById('bgInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    state.bgSrc = reader.result;
+    document.getElementById('bgThumb').src = reader.result;
+    document.getElementById('bgThumbRow').style.display = 'flex';
+    state.bgZoom = 100; state.bgPosX = 50; state.bgPosY = 50;
+    document.getElementById('bgZoom').value = 100;
+    document.getElementById('bgZoomVal').textContent = '100%';
+    document.getElementById('bgPosX').value = 50;
+    document.getElementById('bgPosXVal').textContent = '50%';
+    document.getElementById('bgPosY').value = 50;
+    document.getElementById('bgPosYVal').textContent = '50%';
+    const probe = new Image();
+    probe.onload = () => {
+      state.bgImgW = probe.naturalWidth;
+      state.bgImgH = probe.naturalHeight;
+      renderBg();
+    };
+    probe.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+document.getElementById('removeBgBtn').onclick = () => {
+  state.bgSrc = null;
+  state.bgImgW = null; state.bgImgH = null;
+  document.getElementById('bgThumbRow').style.display = 'none';
+  renderBg();
+};
+document.getElementById('bgBlur').addEventListener('input', (e) => {
+  state.bgBlur = Number(e.target.value);
+  document.getElementById('bgBlurVal').textContent = state.bgBlur+'px';
+  renderBg();
+});
+document.getElementById('bgTint').addEventListener('input', (e) => {
+  state.bgTint = Number(e.target.value);
+  document.getElementById('bgTintVal').textContent = state.bgTint+'%';
+  renderBg();
+});
+document.getElementById('bgZoom').addEventListener('input', (e) => {
+  state.bgZoom = Number(e.target.value);
+  document.getElementById('bgZoomVal').textContent = state.bgZoom+'%';
+  renderBg();
+});
+document.getElementById('bgPosX').addEventListener('input', (e) => {
+  state.bgPosX = Number(e.target.value);
+  document.getElementById('bgPosXVal').textContent = state.bgPosX+'%';
+  renderBg();
+});
+document.getElementById('bgPosY').addEventListener('input', (e) => {
+  state.bgPosY = Number(e.target.value);
+  document.getElementById('bgPosYVal').textContent = state.bgPosY+'%';
+  renderBg();
+});
+window.addEventListener('resize', () => renderBg());
+function renderBg(){
+  const layer = document.getElementById('bgLayer');
+  const img = document.getElementById('bgImgEl');
+  const tint = document.getElementById('bgTintLayer');
+  layer.style.filter = `blur(${state.bgBlur}px)`;
+  tint.style.background = `rgba(15,20,32,${state.bgTint/100})`;
+
+  if(!state.bgSrc || !state.bgImgW || !state.bgImgH){
+    img.style.display = 'none';
+    img.removeAttribute('src');
+    return;
+  }
+  img.style.display = 'block';
+  if(img.src !== state.bgSrc) img.src = state.bgSrc;
+
+  const boxW = layer.clientWidth || 1;
+  const boxH = layer.clientHeight || 1;
+  const coverScale = Math.max(boxW / state.bgImgW, boxH / state.bgImgH);
+  const scale = coverScale * (state.bgZoom / 100);
+  const dispW = state.bgImgW * scale;
+  const dispH = state.bgImgH * scale;
+  const overflowX = Math.max(0, dispW - boxW);
+  const overflowY = Math.max(0, dispH - boxH);
+  const left = -(overflowX * (state.bgPosX / 100));
+  const top = -(overflowY * (state.bgPosY / 100));
+
+  img.style.width = dispW + 'px';
+  img.style.height = dispH + 'px';
+  img.style.left = left + 'px';
+  img.style.top = top + 'px';
+}
+
+/* ---------------- poster style ---------------- */
+const captureAreaEl = document.getElementById('captureArea');
+function applyPosterStyle(){
+  captureAreaEl.style.background = state.posterBg;
+  captureAreaEl.style.border = state.borderWidth > 0
+    ? `${state.borderWidth}px solid ${state.borderColor}`
+    : 'none';
+  captureAreaEl.style.fontFamily = state.fontFamily;
+  captureAreaEl.style.setProperty('--sched-text', state.textColor);
+  captureAreaEl.style.setProperty('--sched-text-dim', hexToRgba(state.textColor, 0.65));
+  captureAreaEl.style.setProperty('--grid-tint', hexToRgba(state.gridColor, 0.08));
+  captureAreaEl.style.setProperty('--grid-tint2', hexToRgba(state.gridColor, 0.045));
+  captureAreaEl.style.setProperty('--grid-line', hexToRgba(state.gridColor, 0.2));
+  captureAreaEl.style.setProperty('--grid-line-w', state.gridLineWidth + 'px');
+}
+
+function wireStyleColorBtn(btnId, dotId, hexId, stateKey){
+  const btn = document.getElementById(btnId);
+  const dot = document.getElementById(dotId);
+  const hexLabel = document.getElementById(hexId);
+  btn.onclick = () => {
+    openColorPicker(btn, state[stateKey], (hex) => {
+      state[stateKey] = hex;
+      dot.style.background = hex;
+      hexLabel.textContent = hex.toUpperCase();
+      applyPosterStyle();
+    });
+  };
+}
+wireStyleColorBtn('posterBgBtn','posterBgDot','posterBgHex','posterBg');
+wireStyleColorBtn('borderColorBtn','borderColorDot','borderColorHex','borderColor');
+wireStyleColorBtn('gridColorBtn','gridColorDot','gridColorHex','gridColor');
+wireStyleColorBtn('textColorBtn','textColorDot','textColorHex','textColor');
+
+document.getElementById('borderWidth').addEventListener('input', e => {
+  state.borderWidth = Number(e.target.value);
+  document.getElementById('borderWidthVal').textContent = state.borderWidth + 'px';
+  applyPosterStyle();
+});
+document.getElementById('fontSelect').addEventListener('change', e => {
+  state.fontFamily = e.target.value;
+  applyPosterStyle();
+});
+document.getElementById('gridLineWidth').addEventListener('input', e => {
+  state.gridLineWidth = Number(e.target.value);
+  document.getElementById('gridLineWidthVal').textContent = state.gridLineWidth + 'px';
+  applyPosterStyle();
+});
+
+/* ---------------- footer sections ---------------- */
+let footType = 'text';
+const footTypeTextBtn = document.getElementById('footTypeTextBtn');
+const footTypeAttBtn = document.getElementById('footTypeAttBtn');
+const footTextFields = document.getElementById('footTextFields');
+const footAttFields = document.getElementById('footAttFields');
+function setFootType(t){
+  footType = t;
+  footTypeTextBtn.classList.toggle('active', t==='text');
+  footTypeAttBtn.classList.toggle('active', t==='attendance');
+  footTextFields.style.display = t==='text' ? 'flex' : 'none';
+  footTextFields.style.flexDirection = 'column';
+  footTextFields.style.gap = '10px';
+  footAttFields.style.display = t==='attendance' ? 'flex' : 'none';
+  footAttFields.style.flexDirection = 'column';
+  footAttFields.style.gap = '10px';
+}
+footTypeTextBtn.onclick = () => setFootType('text');
+footTypeAttBtn.onclick = () => setFootType('attendance');
+setFootType('text');
+
+document.getElementById('addFootBtn').onclick = () => {
+  const divider = document.getElementById('footDivider').checked;
+  if(footType === 'attendance'){
+    const title = document.getElementById('footAttTitle').value.trim() || 'Asistencia';
+    const hoursText = document.getElementById('footAttHours').value.trim();
+    const weeksCount = Math.max(1, Number(document.getElementById('footAttWeeks').value) || 1);
+    state.footerSections.push({ id: nextId(), type:'attendance', title, hoursText, weeksCount, doneWeeks: [], divider });
+    document.getElementById('footAttHours').value='';
+  } else {
+    const title = document.getElementById('footTitle').value.trim();
+    const sub = document.getElementById('footSub').value.trim();
+    const items = document.getElementById('footItems').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!title && items.length===0){ alert('Agregá al menos un título o un ítem.'); return; }
+    state.footerSections.push({ id: nextId(), type:'text', title, sub, items, divider });
+    document.getElementById('footTitle').value='';
+    document.getElementById('footSub').value='';
+    document.getElementById('footItems').value='';
+  }
+  renderFootList(); renderFooterArea();
+};
+function renderFootList(){
+  const list = document.getElementById('footList');
+  list.innerHTML = '';
+  state.footerSections.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'itemCard';
+    const metaText = f.type === 'attendance'
+      ? `${f.weeksCount} semana(s)${f.hoursText ? ' · ' + escapeHtml(f.hoursText) : ''}`
+      : `${f.items.length} ítem(s)`;
+    card.innerHTML = `<div class="top"><span class="name">${escapeHtml(f.title||'(sin título)')}</span></div>
+      <div class="meta">${metaText}</div>
+      <div class="actions"><button class="btn btn-sm btn-danger">Eliminar</button></div>`;
+    card.querySelector('button').onclick = () => {
+      state.footerSections = state.footerSections.filter(x => x.id !== f.id);
+      renderFootList(); renderFooterArea();
+    };
+    list.appendChild(card);
+  });
+}
+function renderFooterArea(){
+  const area = document.getElementById('footerArea');
+  area.innerHTML = '';
+  state.footerSections.forEach(f => {
+    if(f.divider){
+      const hr = document.createElement('hr');
+      hr.className = 'footer-divider';
+      area.appendChild(hr);
+    }
+    if(f.type === 'attendance'){
+      const sec = document.createElement('div');
+      sec.className = 'attendance-block';
+      let html = `<div class="attendance-head">${escapeHtml(f.title)}</div>`;
+      if(f.hoursText) html += `<div class="attendance-req">${escapeHtml(f.hoursText)}</div>`;
+      html += `<div class="attendance-weeks">`;
+      for(let w=1; w<=f.weeksCount; w++){
+        const done = f.doneWeeks.includes(w);
+        html += `<div class="week-chip${done?' done':''}" data-week="${w}"><span class="box"></span>Semana ${w}</div>`;
+      }
+      html += `</div>`;
+      sec.innerHTML = html;
+      sec.querySelectorAll('.week-chip').forEach(chip => {
+        chip.onclick = () => {
+          const w = Number(chip.dataset.week);
+          if(f.doneWeeks.includes(w)) f.doneWeeks = f.doneWeeks.filter(x=>x!==w);
+          else f.doneWeeks.push(w);
+          renderFooterArea();
+        };
+      });
+      area.appendChild(sec);
+    } else {
+      const sec = document.createElement('div');
+      sec.className = 'footer-section';
+      let html = '';
+      if(f.title) html += `<div class="footer-title">${escapeHtml(f.title)}</div>`;
+      if(f.sub) html += `<div class="footer-sub">${escapeHtml(f.sub)}</div>`;
+      if(f.items.length) html += `<ul class="footer-items">${f.items.map(it=>`<li>${escapeHtml(it)}</li>`).join('')}</ul>`;
+      sec.innerHTML = html;
+      area.appendChild(sec);
+    }
+  });
+}
+
+/* ---------------- pendientes (todo checklist) ---------------- */
+document.getElementById('addTodoBtn').onclick = () => {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if(!text) return;
+  state.todos.push({ id: nextId(), text, done: false });
+  input.value = '';
+  renderTodoSidebar(); renderTodoArea();
+};
+document.getElementById('todoInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('addTodoBtn').click(); }
+});
+function renderTodoSidebar(){
+  const list = document.getElementById('todoListSidebar');
+  list.innerHTML = '';
+  if(state.todos.length === 0){
+    list.innerHTML = '<p class="hint">No hay pendientes agregados.</p>';
+    return;
+  }
+  state.todos.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'itemCard';
+    row.innerHTML = `<div class="top">
+        <input type="checkbox" style="width:auto;" ${t.done?'checked':''}>
+        <span class="name" style="${t.done?'text-decoration:line-through;color:var(--text-dim);':''}">${escapeHtml(t.text)}</span>
+        <button class="btn btn-sm btn-danger" data-act="del">Quitar</button>
+      </div>`;
+    row.querySelector('input[type=checkbox]').onchange = (e) => {
+      t.done = e.target.checked;
+      renderTodoSidebar(); renderTodoArea();
+    };
+    row.querySelector('[data-act=del]').onclick = () => {
+      state.todos = state.todos.filter(x => x.id !== t.id);
+      renderTodoSidebar(); renderTodoArea();
+    };
+    list.appendChild(row);
+  });
+}
+function renderTodoArea(){
+  const area = document.getElementById('todoArea');
+  area.innerHTML = '';
+  if(state.todos.length === 0) return;
+  const block = document.createElement('div');
+  block.className = 'todo-block';
+  block.innerHTML = `<div class="footer-title">Pendientes</div>
+    <ul class="todo-list"></ul>`;
+  const ul = block.querySelector('.todo-list');
+  state.todos.forEach(t => {
+    const li = document.createElement('li');
+    li.className = 'todo-row' + (t.done ? ' done' : '');
+    li.innerHTML = `<span class="box"></span><span>${escapeHtml(t.text)}</span>`;
+    li.onclick = () => {
+      t.done = !t.done;
+      renderTodoSidebar(); renderTodoArea();
+    };
+    ul.appendChild(li);
+  });
+  area.appendChild(block);
+}
+
+/* ---------------- semanas cursadas ---------------- */
+document.getElementById('weeksEnabled').addEventListener('change', (e) => {
+  state.weeksEnabled = e.target.checked;
+  renderWeeksArea();
+});
+document.getElementById('weeksStart').addEventListener('change', (e) => {
+  state.weeksStart = e.target.value;
+  renderWeeksArea();
+});
+document.getElementById('weeksCount').addEventListener('input', (e) => {
+  state.weeksCount = Math.max(1, Number(e.target.value) || 1);
+  renderWeeksArea();
+});
+function weekDateLabel(startStr, weekIdx){
+  if(!startStr) return '';
+  const start = new Date(startStr + 'T00:00:00');
+  if(isNaN(start.getTime())) return '';
+  const from = new Date(start.getTime() + (weekIdx-1)*7*86400000);
+  const to = new Date(from.getTime() + 6*86400000);
+  const fmt = (d) => `${d.getDate()}/${d.getMonth()+1}`;
+  return `${fmt(from)}–${fmt(to)}`;
+}
+function renderWeeksArea(){
+  const area = document.getElementById('weeksArea');
+  area.innerHTML = '';
+  if(!state.weeksEnabled) return;
+  const block = document.createElement('div');
+  block.className = 'weeks-block';
+  let html = `<div class="footer-title">Semanas cursadas</div><div class="weeks-grid">`;
+  for(let w=1; w<=state.weeksCount; w++){
+    const done = state.weeksDone.includes(w);
+    const dateLabel = weekDateLabel(state.weeksStart, w);
+    html += `<div class="wk-chip${done?' done':''}" data-week="${w}">
+        <span class="wk-num">Semana ${w}</span>
+        ${dateLabel ? `<span class="wk-date">${dateLabel}</span>` : ''}
+      </div>`;
+  }
+  html += `</div>`;
+  block.innerHTML = html;
+  block.querySelectorAll('.wk-chip').forEach(chip => {
+    chip.onclick = () => {
+      const w = Number(chip.dataset.week);
+      if(state.weeksDone.includes(w)) state.weeksDone = state.weeksDone.filter(x=>x!==w);
+      else state.weeksDone.push(w);
+      renderWeeksArea();
+    };
+  });
+  area.appendChild(block);
+}
+
+/* ---------------- grid + blocks rendering ---------------- */
+function renderGrid(){
+  const wrap = document.getElementById('gridWrap');
+  wrap.innerHTML = '';
+  const days = state.activeDays;
+  const totalMinutes = state.gridEnd - state.gridStart;
+  const rowsCount = totalMinutes / state.interval;
+  const bodyHeight = rowsCount * ROW_H;
+
+  // hour column — lives outside the bordered block, so the border starts after it
+  const timeCol = document.createElement('div');
+  timeCol.className = 'time-col';
+  timeCol.style.width = TIME_COL_W+'px';
+
+  const timeColHeader = document.createElement('div');
+  timeColHeader.className = 'time-col-header';
+  timeCol.appendChild(timeColHeader);
+
+  const timeLabels = document.createElement('div');
+  timeLabels.className = 'time-labels';
+  timeLabels.style.height = bodyHeight+'px';
+  for(let m = state.gridStart; m <= state.gridEnd; m += state.interval){
+    const lbl = document.createElement('div');
+    lbl.className = 'time-label mono';
+    lbl.style.position='absolute';
+    lbl.style.top = ((m-state.gridStart)/state.interval*ROW_H)+'px';
+    lbl.style.width = '100%';
+    lbl.style.height = ROW_H+'px';
+    lbl.textContent = fmtLabel(m);
+    timeLabels.appendChild(lbl);
+  }
+  timeCol.appendChild(timeLabels);
+  wrap.appendChild(timeCol);
+
+  // bordered block: day headers + day columns only (no hours inside)
+  const daysBlock = document.createElement('div');
+  daysBlock.className = 'days-block';
+
+  const header = document.createElement('div');
+  header.className = 'grid-header';
+  days.forEach(dayIdx => {
+    const dh = document.createElement('div');
+    dh.className = 'day-header';
+    dh.style.width = CELL_W+'px';
+    dh.textContent = DAY_NAMES[dayIdx];
+    header.appendChild(dh);
+  });
+  daysBlock.appendChild(header);
+
+  const dayColumns = document.createElement('div');
+  dayColumns.className = 'day-columns';
+  dayColumns.style.position='relative';
+  dayColumns.style.height = bodyHeight+'px';
+  days.forEach(dayIdx => {
+    const col = document.createElement('div');
+    col.className = 'day-col';
+    col.style.width = CELL_W+'px';
+    col.style.height = bodyHeight+'px';
+    for(let r=0;r<=rowsCount;r++){
+      const line = document.createElement('div');
+      line.className = 'grid-line';
+      line.style.top = (r*ROW_H)+'px';
+      col.appendChild(line);
+    }
+    dayColumns.appendChild(col);
+  });
+
+  const blocksLayer = document.createElement('div');
+  blocksLayer.className = 'blocks-layer';
+  state.blocks.forEach(b => {
+    const tFrom = Math.max(b.timeFrom, state.gridStart);
+    const tTo = Math.min(b.timeTo, state.gridEnd);
+    if(tTo <= tFrom) return;
+
+    const segments = b.dayMode === 'custom'
+      ? b.days.map(d => ({ dayFrom: d, dayTo: d }))
+      : [{ dayFrom: b.dayFrom, dayTo: b.dayTo }];
+
+    segments.forEach(seg => {
+      const startColPos = days.indexOf(seg.dayFrom);
+      const endColPos = days.indexOf(seg.dayTo);
+      if(startColPos === -1 || endColPos === -1) return;
+      const left = startColPos * CELL_W;
+      const width = (endColPos - startColPos + 1) * CELL_W;
+      const top = (tFrom - state.gridStart)/state.interval*ROW_H;
+      const height = (tTo - tFrom)/state.interval*ROW_H;
+      const el = document.createElement('div');
+      el.className = 'block';
+      el.style.left = (left+3)+'px';
+      el.style.width = (width-6)+'px';
+      el.style.top = (top+2)+'px';
+      el.style.height = (height-4)+'px';
+      el.style.background = b.color;
+      el.innerHTML = `<div class="bname">${escapeHtml(b.name)}</div><div class="btime">${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>`;
+      blocksLayer.appendChild(el);
+    });
+  });
+  dayColumns.appendChild(blocksLayer);
+  daysBlock.appendChild(dayColumns);
+  wrap.appendChild(daysBlock);
+}
+
+function renderAll(){
+  renderGrid();
+  renderFooterArea();
+  renderWeeksArea();
+  renderTodoArea();
+  renderImagesLayer();
+  renderBg();
+}
+
+/* ---------------- top-level controls ---------------- */
+document.getElementById('gridStart').addEventListener('change', e => {
+  state.gridStart = timeToMin(e.target.value); renderAll();
+});
+document.getElementById('gridEnd').addEventListener('change', e => {
+  state.gridEnd = timeToMin(e.target.value); renderAll();
+});
+document.getElementById('interval').addEventListener('change', e => {
+  state.interval = Number(e.target.value); renderAll();
+});
+const titleInputEl = document.getElementById('titleInput');
+const titleDisplayEl = document.getElementById('titleDisplay');
+
+titleInputEl.addEventListener('input', e => {
+  state.title = e.target.value;
+  titleDisplayEl.textContent = state.title;
+});
+
+titleDisplayEl.addEventListener('input', () => {
+  state.title = titleDisplayEl.textContent;
+  titleInputEl.value = state.title;
+});
+titleDisplayEl.addEventListener('blur', () => {
+  if(!titleDisplayEl.textContent.trim()){
+    titleDisplayEl.textContent = '';
+  }
+});
+titleDisplayEl.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ e.preventDefault(); titleDisplayEl.blur(); }
+});
+
+document.getElementById('downloadBtn').onclick = () => {
+  const btn = document.getElementById('downloadBtn');
+  btn.textContent = 'Generando...';
+  // Esperar a que las fuentes web terminen de cargar; si html2canvas captura
+  // antes de tiempo, o intenta leer las reglas CSS de una hoja externa sin
+  // CORS, puede rechazar la promesa y dejar la descarga sin efecto.
+  const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  ready.then(() => html2canvas(document.getElementById('captureArea'), {
+    backgroundColor: '#0f1420',
+    scale: 2,
+    useCORS: true,
+    allowTaint: false,
+    imageTimeout: 15000,
+    logging: false
+  })).then(canvas => {
+    const link = document.createElement('a');
+    link.download = (state.title || 'horario').replace(/\s+/g,'_') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    btn.textContent = '⬇ Descargar imagen';
+  }).catch(err => {
+    console.error(err);
+    btn.textContent = '⬇ Descargar imagen';
+    alert('No se pudo generar la imagen: ' + (err && err.message ? err.message : 'error desconocido') + '. Probá recargar la página e intentá de nuevo.');
+  });
+};
+
+/* ---------------- init ---------------- */
+renderDayToggles();
+populateDaySelects();
+renderBlockCustomDayToggles();
+renderBlockList();
+renderImageList();
+renderTodoSidebar();
+applyPosterStyle();
+renderAll();
+
+})();
+</script>
+</body>
+</html>
