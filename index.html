@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Constructor de Horarios</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +29,7 @@ body{
   color:var(--text);
   font-family:'Inter',sans-serif;
   min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
 }
 h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
 .mono{font-family:'IBM Plex Mono',monospace;}
@@ -104,6 +105,9 @@ h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
   align-items:center;
   gap:8px;
   transition:transform .08s ease, border-color .15s ease;
+  -webkit-user-select:none;
+  user-select:none;
+  touch-action:manipulation;
 }
 .btn:hover{border-color:var(--accent);}
 .btn:active{transform:scale(.97);}
@@ -140,6 +144,7 @@ details.section summary{
   align-items:center;
   justify-content:space-between;
   user-select:none;
+  -webkit-tap-highlight-color:transparent;
 }
 details.section summary::-webkit-details-marker{display:none;}
 details.section summary .chev{transition:transform .2s ease;color:var(--text-dim);}
@@ -165,15 +170,42 @@ input[type=text], input[type=time], input[type=number], input[type=date], select
   border-radius:7px;
   font-size:13.5px;
   width:100%;
+  -webkit-appearance:none;
+  appearance:none;
+  max-width:100%;
+}
+input[type=time]{
+  padding:8px 10px;
+  min-height:40px;
+}
+input[type=time]::-webkit-datetime-edit{
+  padding:0;
+}
+input[type=time]::-webkit-calendar-picker-indicator{
+  filter:invert(0.7) brightness(1.4);
+  cursor:pointer;
+  padding:4px;
+  margin-left:4px;
 }
 input[type=date]{
   color-scheme:dark;
   font-family:'IBM Plex Mono',monospace;
   font-size:12.5px;
+  padding:8px 10px;
+  min-height:40px;
 }
 input[type=date]::-webkit-calendar-picker-indicator{
   filter:invert(0.7) brightness(1.4);
   cursor:pointer;
+  padding:4px;
+}
+input[type=number]{
+  -moz-appearance:textfield;
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{
+  -webkit-appearance:none;
+  margin:0;
 }
 textarea{resize:vertical;min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
 input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent);}
@@ -184,6 +216,8 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   padding:6px 9px;border:1px solid var(--border);border-radius:6px;
   font-size:12px;cursor:pointer;color:var(--text-dim);background:var(--bg-app);
   user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
 }
 .dayToggle.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
 
@@ -191,6 +225,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   display:flex;align-items:center;gap:8px;
   border:1px solid var(--border);background:var(--bg-app);
   padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--text);font-size:13px;
+  touch-action:manipulation;
 }
 .swatchDot{width:18px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,.25);flex-shrink:0;}
 
@@ -203,45 +238,80 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   flex-direction:column;
   gap:6px;
 }
-.itemCard .top{display:flex;align-items:center;gap:8px;}
-.itemCard .name{font-weight:600;font-size:13px;flex:1;}
+.itemCard .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.itemCard .name{font-weight:600;font-size:13px;flex:1;min-width:60px;}
 .itemCard .meta{font-size:11px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
-.itemCard .actions{display:flex;gap:6px;}
+.itemCard .actions{display:flex;gap:6px;flex-wrap:wrap;}
 .hint{font-size:11.5px;color:var(--text-dim);line-height:1.5;}
-.thumbRow{display:flex;align-items:center;gap:8px;}
+.thumbRow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .thumb{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
 
 /* ---------- capture area (the poster / schedule) ---------- */
-#captureWrap{display:inline-block;}
+#captureWrap{display:inline-block;width:100%;overflow-x:auto;}
 .capture-area{
   position:relative;
-  background:#0f1420;
   border-radius:14px;
   overflow:hidden;
   padding:28px 32px 34px;
   min-width:760px;
 }
-.bg-layer{
-  position:absolute; inset:-20px;
-  overflow:hidden;
-  filter:blur(14px);
-  opacity:.55;
+/* Fondo de la planilla (sólido o degradado) */
+.capture-area-solid-bg{
+  position:absolute;
+  inset:0;
   z-index:0;
+  border-radius:14px;
 }
-.bg-img{
+/* Fondo con imagen solo para la parte del horario (grid) */
+.horario-bg-layer{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  bottom:0;
+  overflow:hidden;
+  z-index:1;
+  pointer-events:none;
+  border-radius:14px 14px 0 0;
+}
+.horario-bg-img{
   position:absolute;
   display:block;
   max-width:none;
+  width:100%;
+  height:100%;
+  object-fit:cover;
 }
-.bg-tint{position:absolute;inset:0;background:rgba(15,20,32,.35);z-index:0;}
+.horario-bg-tint{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+/* Contenedor del título y grid */
+.horario-content{
+  position:relative;
+  z-index:2;
+  padding-bottom:20px;
+}
+/* El título está sobre el fondo sólido */
 .schedule-title{
-  position:relative;z-index:2;
-  font-size:28px;font-weight:700;letter-spacing:-.02em;
-  margin:0 0 18px;color:var(--sched-text,#fff);text-shadow:0 2px 12px rgba(0,0,0,.5);
-  outline:none;border-radius:6px;padding:2px 4px;margin-left:-4px;
+  position:relative;
+  z-index:3;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-.02em;
+  margin:0 0 18px;
+  color:var(--sched-text,#fff);
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
+  outline:none;
+  border-radius:6px;
+  padding:2px 4px;
+  margin-left:-4px;
   cursor:text;
   transition:box-shadow .15s ease;
   font-family:inherit;
+  background:transparent;
 }
 .schedule-title:hover{box-shadow:0 0 0 1px rgba(255,255,255,.25);}
 .schedule-title:focus{box-shadow:0 0 0 2px var(--accent);}
@@ -249,18 +319,29 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   content:'Escribí el título del horario…';
   color:rgba(255,255,255,.5);
 }
+/* Separador visual entre horario y pie */
+.horario-divider{
+  position:relative;
+  z-index:3;
+  border:none;
+  border-top:2px solid var(--grid-line, rgba(255,255,255,.15));
+  margin:20px 0 20px 0;
+}
 .grid-wrap{
-  position:relative;z-index:2;display:flex;align-items:flex-start;
+  position:relative;
+  z-index:3;
+  display:flex;
+  align-items:flex-start;
+  isolation:isolate;
 }
 .grid-scroll{position:relative;}
-/* hour column: sits outside the bordered grid so labels are never clipped by a border */
 .time-col{flex-shrink:0;display:flex;flex-direction:column;}
 .time-col-header{flex-shrink:0;height:40px;}
-/* everything to the right of the hours (headers + day columns) shares one border,
-   which is what makes it "start after the hours" instead of wrapping them */
 .days-block{
   border:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));
   border-radius:4px;
+  background:var(--grid-bg-color, rgba(15,20,32,0.7));
+  backdrop-filter:blur(4px);
 }
 .grid-header{display:flex;border-bottom:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
 .day-header{
@@ -296,26 +377,46 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .blocks-layer{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;}
 .block{
   position:absolute;
-  border-radius:8px;
-  padding:6px 8px;
+  border-radius:6px;
+  padding:4px 5px;
   overflow:hidden;
   box-shadow:0 2px 8px rgba(0,0,0,.35);
   border:1px solid rgba(255,255,255,.25);
   pointer-events:auto;
+  font-size:10px;
+  min-height:20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
 }
-.block .bname{font-family:inherit;font-weight:600;font-size:12.5px;line-height:1.25;text-shadow:0 1px 3px rgba(0,0,0,.4);}
-.block .btime{font-family:inherit;font-size:10px;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.block .bname{font-family:inherit;font-weight:600;font-size:10px;line-height:1.2;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.block .btime{font-family:inherit;font-size:8px;margin-top:1px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
 
-.footer-area{position:relative;z-index:2;margin-top:26px;}
-.weeks-area{position:relative;z-index:2;margin-top:20px;}
-.todo-area{position:relative;z-index:2;margin-top:20px;}
+/* Pie de página y demás secciones con fondo sólido */
+.footer-area{
+  position:relative;
+  z-index:3;
+  margin-top:0;
+  background:transparent;
+}
+.weeks-area{
+  position:relative;
+  z-index:3;
+  margin-top:20px;
+  background:transparent;
+}
+.todo-area{
+  position:relative;
+  z-index:3;
+  margin-top:20px;
+  background:transparent;
+}
 .footer-section{margin-bottom:16px;}
 .footer-divider{border:none;border-top:1px dashed var(--grid-line, rgba(255,255,255,.25));margin:14px 0;}
 .footer-title{font-family:inherit;font-weight:700;font-size:15px;color:var(--sched-text,#fff);margin:0 0 2px;}
 .footer-sub{font-family:inherit;font-size:12px;color:var(--accent-2);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
 .footer-items{font-family:inherit;margin:0;padding-left:18px;color:var(--sched-text-dim, rgba(255,255,255,.85));font-size:12.5px;line-height:1.7;}
 
-/* attendance tracker inside footer */
 .attendance-block{font-family:inherit;}
 .attendance-head{font-weight:700;font-size:15px;color:var(--sched-text,#fff);margin:0 0 2px;}
 .attendance-req{font-size:12px;color:var(--accent-2);margin:0 0 8px;font-weight:600;}
@@ -338,7 +439,6 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .week-chip.done .box::after{content:'✓';font-size:9px;line-height:1;color:#0f1420;}
 .week-chip.done{opacity:.8;}
 
-/* todo checklist */
 .todo-block{font-family:inherit;}
 .todo-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
 .todo-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--sched-text-dim, rgba(255,255,255,.9));cursor:pointer;user-select:none;}
@@ -351,7 +451,6 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .todo-row.done .box{background:var(--accent-2);border-color:var(--accent-2);}
 .todo-row.done .box::after{content:'✓';font-size:10px;line-height:1;color:#0f1420;}
 
-/* weeks-cursed tracker */
 .weeks-block{font-family:inherit;}
 .weeks-grid{display:flex;flex-wrap:wrap;gap:6px;}
 .wk-chip{
@@ -369,11 +468,9 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .wk-chip.done{background:var(--accent-2);border-color:var(--accent-2);color:#0f1420;}
 .wk-chip.done .wk-date{color:rgba(15,20,32,.7);}
 
-.mini-toggle{display:flex;gap:6px;}
-.mini-toggle .btn{flex:1;justify-content:center;}
-.mini-toggle .btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+.mini-toggle{display:flex;gap:6px;flex-wrap:wrap;}
+.mini-toggle .btn{flex:1;justify-content:center;min-width:80px;}
 
-/* images layer over whole poster */
 .images-layer{position:absolute;inset:0;pointer-events:none;}
 .images-layer-back{z-index:1;}
 .images-layer-front{z-index:6;}
@@ -431,10 +528,12 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   padding:16px;
   box-shadow:0 12px 40px rgba(0,0,0,.5);
   width:250px;
+  max-width:90vw;
   display:none;
 }
 #colorPopover.open{display:block;}
-.wheelWrap{position:relative;width:200px;height:200px;margin:0 auto 10px;}
+.wheelWrap{position:relative;width:200px;height:200px;margin:0 auto 10px;max-width:100%;}
+.wheelWrap canvas{max-width:100%;height:auto;}
 #hueWheel{border-radius:50%;cursor:crosshair;}
 .wheelMarker{
   position:absolute;width:14px;height:14px;border-radius:50%;
@@ -443,8 +542,8 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 }
 .lightRow{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .lightRow input[type=range]{flex:1;}
-.hexRow{display:flex;gap:8px;margin-bottom:10px;}
-.hexRow input{flex:1;}
+.hexRow{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.hexRow input{flex:1;min-width:100px;}
 .previewSwatch{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;}
 .presetRow{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
 .presetDot{width:20px;height:20px;border-radius:5px;cursor:pointer;border:1px solid rgba(255,255,255,.3);}
@@ -454,10 +553,93 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .slider-line input[type=range]{flex:1;}
 .slider-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);width:34px;text-align:right;}
 
+/* ---------- responsive ---------- */
 @media (max-width: 900px){
   #app{flex-direction:column;}
-  #sidebar{width:100%;height:auto;position:relative;}
-  #main{padding:20px;}
+  #sidebar{
+    width:100%;
+    min-width:unset;
+    height:auto;
+    position:relative;
+    border-right:none;
+    border-bottom:1px solid var(--border);
+    padding:16px 14px 40px;
+    max-height:60vh;
+    overflow-y:auto;
+  }
+  #main{padding:16px;}
+  #titleInput{font-size:20px;min-width:unset;width:100%;}
+  #topbar{flex-direction:column;align-items:stretch;}
+  .capture-area{
+    min-width:unset;
+    padding:16px;
+    transform:scale(0.85);
+    transform-origin:top left;
+    width:auto;
+  }
+  #captureWrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .row2{grid-template-columns:1fr;}
+  .row3{grid-template-columns:1fr;}
+  .dayToggle{padding:8px 12px;font-size:13px;}
+  .btn{font-size:13px;padding:10px 14px;min-height:44px;}
+  .btn-sm{padding:8px 12px;min-height:36px;font-size:12px;}
+  input[type=time], input[type=date]{
+    font-size:16px !important;
+    min-height:44px;
+  }
+  .schedule-title{font-size:20px;}
+  .floating-img .remove-handle,
+  .floating-img .rotate-handle,
+  .floating-img .resize-handle{
+    width:24px !important;
+    height:24px !important;
+  }
+  .floating-img .remove-handle{font-size:14px;}
+  .floating-img .rotate-handle{top:-30px;width:20px;height:20px;}
+  .floating-img .resize-handle{width:20px;height:20px;right:-8px;bottom:-8px;}
+}
+
+@media (max-width: 480px){
+  .brand h1{font-size:17px;}
+  .brand-sub{font-size:11px;}
+  .capture-area{
+    transform:scale(0.7);
+    padding:12px;
+  }
+  .capture-area .schedule-title{font-size:16px;}
+  .day-header{font-size:10px;height:30px;}
+  .time-label{font-size:9px;}
+  .block .bname{font-size:8px;}
+  .block .btime{font-size:7px;}
+  .block{padding:2px 3px;min-height:14px;}
+  .time-col{width:45px !important;}
+  .time-label{padding-right:4px;}
+  .floating-img .remove-handle,
+  .floating-img .rotate-handle,
+  .floating-img .resize-handle{
+    width:20px !important;
+    height:20px !important;
+  }
+  .floating-img .remove-handle{font-size:12px;left:-6px;top:-6px;}
+  .floating-img .rotate-handle{top:-24px;width:16px;height:16px;}
+  .floating-img .resize-handle{width:16px;height:16px;right:-6px;bottom:-6px;}
+}
+
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+  padding: 0 2px;
+}
+input[type="time"]::-webkit-datetime-edit-text {
+  padding: 0 2px;
 }
 </style>
 </head>
@@ -497,7 +679,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
           <input type="text" id="blockName" placeholder="Ej. Matemáticas">
         </label>
         <label class="field">¿Cómo elegís los días?</label>
-        <div class="dayModeToggle" style="display:flex;gap:6px;">
+        <div class="dayModeToggle" style="display:flex;gap:6px;flex-wrap:wrap;">
           <button type="button" class="btn btn-sm" id="modeRangeBtn" data-mode="range">Días seguidos</button>
           <button type="button" class="btn btn-sm" id="modeCustomBtn" data-mode="custom">Días específicos</button>
         </div>
@@ -523,24 +705,62 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
             <input type="time" id="blockTimeTo" value="09:00">
           </label>
         </div>
-        
-        <div class="row2">
-          <label class="field">Color de fondo del bloque</label>
-          <label class="field">Color del texto</label>
+
+        <label class="field">Tipo de fondo del bloque</label>
+        <div class="mini-toggle" id="blockBgTypeToggle">
+          <button type="button" class="btn btn-sm active" data-bgtype="solid">Sólido</button>
+          <button type="button" class="btn btn-sm" data-bgtype="gradient">Degradado</button>
         </div>
-        <div class="row2">
+
+        <div id="blockSolidColor">
+          <label class="field">Color de fondo</label>
           <button class="colorSwatchBtn" id="blockColorBtn" type="button">
             <span class="swatchDot" id="blockColorDot" style="background:#f2a65a"></span>
             <span id="blockColorHex">#F2A65A</span>
           </button>
-          <button class="colorSwatchBtn" id="blockTextColorBtn" type="button">
-            <span class="swatchDot" id="blockTextColorDot" style="background:#ffffff"></span>
-            <span id="blockTextColorHex">#FFFFFF</span>
-          </button>
         </div>
+
+        <div id="blockGradientColors" style="display:none;">
+          <label class="field">Color 1</label>
+          <button class="colorSwatchBtn" id="blockGradColor1Btn" type="button">
+            <span class="swatchDot" id="blockGradColor1Dot" style="background:#f2a65a"></span>
+            <span id="blockGradColor1Hex">#F2A65A</span>
+          </button>
+          <label class="field">Color 2</label>
+          <button class="colorSwatchBtn" id="blockGradColor2Btn" type="button">
+            <span class="swatchDot" id="blockGradColor2Dot" style="background:#4fd1c5"></span>
+            <span id="blockGradColor2Hex">#4FD1C5</span>
+          </button>
+          <label class="field">Color 3 (opcional)</label>
+          <button class="colorSwatchBtn" id="blockGradColor3Btn" type="button">
+            <span class="swatchDot" id="blockGradColor3Dot" style="background:#8e7cff"></span>
+            <span id="blockGradColor3Hex">#8E7CFF</span>
+          </button>
+          <label class="field" style="flex-direction:row;align-items:center;gap:6px;text-transform:none;font-weight:400;color:var(--text);">
+            <input type="checkbox" id="blockGradUse3Colors" style="width:auto;"> Usar 3 colores
+          </label>
+          <label class="field">Dirección del degradado
+            <select id="blockGradDirection">
+              <option value="to right">→ Horizontal</option>
+              <option value="to left">← Horizontal</option>
+              <option value="to bottom">↓ Vertical</option>
+              <option value="to top">↑ Vertical</option>
+              <option value="to bottom right">↘ Diagonal</option>
+              <option value="to bottom left">↙ Diagonal</option>
+              <option value="to top right">↗ Diagonal</option>
+              <option value="to top left">↖ Diagonal</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field">Color del texto</label>
+        <button class="colorSwatchBtn" id="blockTextColorBtn" type="button">
+          <span class="swatchDot" id="blockTextColorDot" style="background:#ffffff"></span>
+          <span id="blockTextColorHex">#FFFFFF</span>
+        </button>
         
         <button class="btn btn-accent" id="addBlockBtn" type="button">+ Agregar bloque</button>
-        <p class="hint">Para repetir el mismo bloque en otro día u horario, usá "Duplicar" en la lista y ajustá el día/hora de la copia.</p>
+        <p class="hint">Si dos o más bloques coinciden en el mismo horario, se distribuirán automáticamente para que se vean todos.</p>
         <div id="blockList"></div>
       </div>
     </details>
@@ -548,7 +768,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
     <details class="section">
       <summary>Imágenes <span class="chev">›</span></summary>
       <div class="section-body">
-        <label class="btn btn-ghost" style="justify-content:center;">
+        <label class="btn btn-ghost" style="justify-content:center;width:100%;">
           Subir imagen
           <input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
         </label>
@@ -560,8 +780,59 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
     <details class="section">
       <summary>Fondo <span class="chev">›</span></summary>
       <div class="section-body">
-        <label class="btn btn-ghost" style="justify-content:center;">
-          Subir imagen de fondo
+        <label class="field" style="flex-direction:row;align-items:center;gap:6px;text-transform:none;font-weight:400;color:var(--text);">
+          <span style="font-weight:600;text-transform:uppercase;color:var(--text-dim);">Nota:</span> La imagen de fondo solo se aplica al área del horario (cuadrícula). El título y pie de página mantienen el color de fondo sólido o degradado.
+        </label>
+
+        <label class="field">Tipo de fondo de la planilla</label>
+        <div class="mini-toggle" id="posterBgTypeToggle">
+          <button type="button" class="btn btn-sm active" data-bgtype="solid">Sólido</button>
+          <button type="button" class="btn btn-sm" data-bgtype="gradient">Degradado</button>
+        </div>
+
+        <div id="posterSolidColor">
+          <label class="field">Color de fondo</label>
+          <button class="colorSwatchBtn" id="posterBgBtn" type="button">
+            <span class="swatchDot" id="posterBgDot" style="background:#0f1420"></span>
+            <span id="posterBgHex">#0F1420</span>
+          </button>
+        </div>
+
+        <div id="posterGradientColors" style="display:none;">
+          <label class="field">Color 1</label>
+          <button class="colorSwatchBtn" id="posterGradColor1Btn" type="button">
+            <span class="swatchDot" id="posterGradColor1Dot" style="background:#0f1420"></span>
+            <span id="posterGradColor1Hex">#0F1420</span>
+          </button>
+          <label class="field">Color 2</label>
+          <button class="colorSwatchBtn" id="posterGradColor2Btn" type="button">
+            <span class="swatchDot" id="posterGradColor2Dot" style="background:#1c2334"></span>
+            <span id="posterGradColor2Hex">#1C2334</span>
+          </button>
+          <label class="field">Color 3 (opcional)</label>
+          <button class="colorSwatchBtn" id="posterGradColor3Btn" type="button">
+            <span class="swatchDot" id="posterGradColor3Dot" style="background:#242c42"></span>
+            <span id="posterGradColor3Hex">#242C42</span>
+          </button>
+          <label class="field" style="flex-direction:row;align-items:center;gap:6px;text-transform:none;font-weight:400;color:var(--text);">
+            <input type="checkbox" id="posterGradUse3Colors" style="width:auto;"> Usar 3 colores
+          </label>
+          <label class="field">Dirección del degradado
+            <select id="posterGradDirection">
+              <option value="to right">→ Horizontal</option>
+              <option value="to left">← Horizontal</option>
+              <option value="to bottom">↓ Vertical</option>
+              <option value="to top">↑ Vertical</option>
+              <option value="to bottom right">↘ Diagonal</option>
+              <option value="to bottom left">↙ Diagonal</option>
+              <option value="to top right">↗ Diagonal</option>
+              <option value="to top left">↖ Diagonal</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="btn btn-ghost" style="justify-content:center;width:100%;margin-top:8px;">
+          Subir imagen de fondo (solo para el horario)
           <input type="file" id="bgInput" accept="image/*" style="display:none;">
         </label>
         <div id="bgThumbRow" class="thumbRow" style="display:none;">
@@ -605,12 +876,6 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
     <details class="section">
       <summary>Estilo de la planilla <span class="chev">›</span></summary>
       <div class="section-body">
-        <label class="field">Color de fondo de la planilla</label>
-        <button class="colorSwatchBtn" id="posterBgBtn" type="button">
-          <span class="swatchDot" id="posterBgDot" style="background:#0f1420"></span>
-          <span id="posterBgHex">#0F1420</span>
-        </button>
-
         <label class="field">Color del borde</label>
         <button class="colorSwatchBtn" id="borderColorBtn" type="button">
           <span class="swatchDot" id="borderColorDot" style="background:#323d58"></span>
@@ -725,6 +990,12 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
         <p class="hint">Marcá cada semana como completa haciendo clic sobre su casillero en la planilla.</p>
       </div>
     </details>
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-accent" id="saveBtn" type="button">💾 Guardar manual</button>
+      <button class="btn btn-sm btn-danger" id="resetBtn" type="button">🗑️ Resetear todo</button>
+      <span style="font-size:10px;color:var(--text-dim);align-self:center;" id="saveStatus">Guardado automático activo</span>
+    </div>
   </aside>
 
   <main id="main">
@@ -735,11 +1006,17 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 
     <div id="captureWrap">
       <div class="capture-area" id="captureArea">
-        <div class="bg-layer" id="bgLayer"><img id="bgImgEl" class="bg-img" alt=""></div>
-        <div class="bg-tint" id="bgTintLayer"></div>
+        <div class="capture-area-solid-bg" id="posterSolidBg"></div>
+        <div class="horario-bg-layer" id="horarioBgLayer">
+          <img id="horarioBgImg" class="horario-bg-img" alt="">
+          <div class="horario-bg-tint" id="horarioBgTint"></div>
+        </div>
         <div class="images-layer images-layer-back" id="imagesLayerBack"></div>
-        <h2 class="schedule-title" id="titleDisplay" contenteditable="true" spellcheck="false">Mi Horario Semanal</h2>
-        <div class="grid-wrap" id="gridWrap"></div>
+        <div class="horario-content">
+          <h2 class="schedule-title" id="titleDisplay" contenteditable="true" spellcheck="false">Mi Horario Semanal</h2>
+          <div class="grid-wrap" id="gridWrap"></div>
+        </div>
+        <hr class="horario-divider">
         <div class="footer-area" id="footerArea"></div>
         <div class="weeks-area" id="weeksArea"></div>
         <div class="todo-area" id="todoArea"></div>
@@ -771,6 +1048,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 
 const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 const CELL_W = 130, ROW_H = 30, HEADER_H = 40, TIME_COL_W = 68;
+const STORAGE_KEY = 'horario_constructor_data_v2';
 
 let state = {
   activeDays: [0,1,2,3,4],
@@ -795,7 +1073,13 @@ let state = {
   weeksCount: 21,
   weeksDone: [],
   title: 'Mi Horario Semanal',
+  posterBgType: 'solid',
   posterBg: '#0F1420',
+  posterGradColor1: '#0F1420',
+  posterGradColor2: '#1C2334',
+  posterGradColor3: '#242C42',
+  posterGradUse3Colors: false,
+  posterGradDirection: 'to bottom',
   borderColor: '#323D58',
   borderWidth: 0,
   gridColor: '#FFFFFF',
@@ -805,19 +1089,51 @@ let state = {
 let idCounter = 1;
 function nextId(){ return 'id' + (idCounter++); }
 
-function timeToMin(str){
-  const [h,m] = str.split(':').map(Number);
-  return h*60+m;
+/* ---------------- PERSISTENCIA ---------------- */
+function saveState() {
+  try {
+    const data = JSON.stringify(state);
+    localStorage.setItem(STORAGE_KEY, data);
+    document.getElementById('saveStatus').textContent = '✅ Guardado en local storage';
+    setTimeout(() => {
+      document.getElementById('saveStatus').textContent = 'Guardado automático activo';
+    }, 2000);
+  } catch(e) {
+    console.warn('Error guardando:', e);
+  }
 }
-function minToTime(min){
-  const h = Math.floor(min/60), m = min%60;
-  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+
+function loadState() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      Object.assign(state, parsed);
+      return true;
+    }
+  } catch(e) {
+    console.warn('Error cargando:', e);
+  }
+  return false;
 }
-function fmtLabel(min){
-  const h = Math.floor(min/60), m = min%60;
-  const suffix = h < 12 ? 'am' : 'pm';
-  let h12 = h % 12; if(h12===0) h12=12;
-  return h12 + (m ? ':'+String(m).padStart(2,'0') : '') + suffix;
+
+function resetState() {
+  if(confirm('¿Estás seguro? Esto borrará TODOS tus datos guardados.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+
+let saveTimeout = null;
+function autoSave() {
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => {
+    saveState();
+  }, 1000);
+}
+
+function triggerAutoSave() {
+  autoSave();
 }
 
 /* ---------------- day toggles ---------------- */
@@ -839,6 +1155,7 @@ function renderDayToggles(){
       populateDaySelects();
       renderBlockCustomDayToggles();
       renderAll();
+      triggerAutoSave();
     };
     dayTogglesEl.appendChild(el);
   });
@@ -869,7 +1186,6 @@ setBlockDayMode('range');
 function renderBlockCustomDayToggles(){
   const wrap = document.getElementById('blockCustomDayToggles');
   wrap.innerHTML = '';
-  // drop selections for days that are no longer active
   blockCustomDays.forEach(d => { if(!state.activeDays.includes(d)) blockCustomDays.delete(d); });
   state.activeDays.forEach(i => {
     const el = document.createElement('div');
@@ -918,7 +1234,7 @@ PRESETS.forEach(c => {
 });
 
 let pickerState = { hue: 30, sat: 0.75, light: 0.65 };
-let colorTarget = null; // callback receiving hex
+let colorTarget = null;
 
 function hslToRgb(h, s, l){
   let r,g,b;
@@ -1061,10 +1377,52 @@ document.addEventListener('click', (e) => {
   }
 });
 
+/* ---------------- FUNCIONES DE DEGRADADO ---------------- */
+function getGradientCSS(colors, direction) {
+  if (!colors || colors.length < 2) return colors[0] || '#FFFFFF';
+  const colorStr = colors.join(', ');
+  return `linear-gradient(${direction}, ${colorStr})`;
+}
+
+function getBlockBackground(block) {
+  if (block.bgType === 'gradient') {
+    const colors = [block.gradColor1];
+    if (block.gradColor2) colors.push(block.gradColor2);
+    if (block.gradUse3Colors && block.gradColor3) colors.push(block.gradColor3);
+    return getGradientCSS(colors, block.gradDirection || 'to right');
+  }
+  return block.color || '#F2A65A';
+}
+
 /* ---------------- block form ---------------- */
 let pendingBlockColor = '#F2A65A';
 let pendingBlockTextColor = '#FFFFFF';
+let pendingBlockBgType = 'solid';
+let pendingBlockGradColor1 = '#F2A65A';
+let pendingBlockGradColor2 = '#4FD1C5';
+let pendingBlockGradColor3 = '#8E7CFF';
+let pendingBlockGradUse3Colors = false;
+let pendingBlockGradDirection = 'to right';
 
+// Toggle tipo de fondo del bloque
+const blockBgTypeToggle = document.getElementById('blockBgTypeToggle');
+const blockSolidColor = document.getElementById('blockSolidColor');
+const blockGradientColors = document.getElementById('blockGradientColors');
+
+function setBlockBgType(type) {
+  pendingBlockBgType = type;
+  blockBgTypeToggle.querySelectorAll('.btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.bgtype === type);
+  });
+  blockSolidColor.style.display = type === 'solid' ? 'block' : 'none';
+  blockGradientColors.style.display = type === 'gradient' ? 'block' : 'none';
+}
+
+blockBgTypeToggle.querySelectorAll('.btn').forEach(btn => {
+  btn.onclick = () => setBlockBgType(btn.dataset.bgtype);
+});
+
+// Colores del bloque
 const blockColorBtn = document.getElementById('blockColorBtn');
 const blockColorDot = document.getElementById('blockColorDot');
 const blockColorHex = document.getElementById('blockColorHex');
@@ -1076,6 +1434,49 @@ blockColorBtn.onclick = () => {
   });
 };
 
+// Colores degradado del bloque
+const blockGradColor1Btn = document.getElementById('blockGradColor1Btn');
+const blockGradColor1Dot = document.getElementById('blockGradColor1Dot');
+const blockGradColor1Hex = document.getElementById('blockGradColor1Hex');
+blockGradColor1Btn.onclick = () => {
+  openColorPicker(blockGradColor1Btn, pendingBlockGradColor1, (hex) => {
+    pendingBlockGradColor1 = hex;
+    blockGradColor1Dot.style.background = hex;
+    blockGradColor1Hex.textContent = hex.toUpperCase();
+  });
+};
+
+const blockGradColor2Btn = document.getElementById('blockGradColor2Btn');
+const blockGradColor2Dot = document.getElementById('blockGradColor2Dot');
+const blockGradColor2Hex = document.getElementById('blockGradColor2Hex');
+blockGradColor2Btn.onclick = () => {
+  openColorPicker(blockGradColor2Btn, pendingBlockGradColor2, (hex) => {
+    pendingBlockGradColor2 = hex;
+    blockGradColor2Dot.style.background = hex;
+    blockGradColor2Hex.textContent = hex.toUpperCase();
+  });
+};
+
+const blockGradColor3Btn = document.getElementById('blockGradColor3Btn');
+const blockGradColor3Dot = document.getElementById('blockGradColor3Dot');
+const blockGradColor3Hex = document.getElementById('blockGradColor3Hex');
+blockGradColor3Btn.onclick = () => {
+  openColorPicker(blockGradColor3Btn, pendingBlockGradColor3, (hex) => {
+    pendingBlockGradColor3 = hex;
+    blockGradColor3Dot.style.background = hex;
+    blockGradColor3Hex.textContent = hex.toUpperCase();
+  });
+};
+
+document.getElementById('blockGradUse3Colors').addEventListener('change', (e) => {
+  pendingBlockGradUse3Colors = e.target.checked;
+});
+
+document.getElementById('blockGradDirection').addEventListener('change', (e) => {
+  pendingBlockGradDirection = e.target.value;
+});
+
+// Color del texto del bloque
 const blockTextColorBtn = document.getElementById('blockTextColorBtn');
 const blockTextColorDot = document.getElementById('blockTextColorDot');
 const blockTextColorHex = document.getElementById('blockTextColorHex');
@@ -1101,7 +1502,13 @@ document.getElementById('addBlockBtn').onclick = () => {
     textColor: pendingBlockTextColor,
     timeFrom: tFrom, 
     timeTo: tTo, 
-    dayMode: blockDayMode
+    dayMode: blockDayMode,
+    bgType: pendingBlockBgType,
+    gradColor1: pendingBlockGradColor1,
+    gradColor2: pendingBlockGradColor2,
+    gradColor3: pendingBlockGradColor3,
+    gradUse3Colors: pendingBlockGradUse3Colors,
+    gradDirection: pendingBlockGradDirection
   };
 
   if(blockDayMode === 'range'){
@@ -1118,6 +1525,7 @@ document.getElementById('addBlockBtn').onclick = () => {
   document.getElementById('blockName').value = '';
   renderBlockList();
   renderAll();
+  triggerAutoSave();
 };
 
 function blockDaysLabel(b){
@@ -1137,11 +1545,13 @@ function renderBlockList(){
   state.blocks.forEach(b => {
     const card = document.createElement('div');
     card.className = 'itemCard';
+    const bgDisplay = b.bgType === 'gradient' ? 'Degradado' : 'Sólido';
     card.innerHTML = `
       <div class="top">
-        <span class="swatchDot" style="background:${b.color}"></span>
+        <span class="swatchDot" style="background:${b.bgType === 'gradient' ? b.gradColor1 : b.color}"></span>
         <span class="swatchDot" style="background:${b.textColor || '#FFFFFF'}"></span>
         <span class="name">${escapeHtml(b.name)}</span>
+        <span style="font-size:10px;color:var(--text-dim);">${bgDisplay}</span>
       </div>
       <div class="meta">${blockDaysLabel(b)} · ${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>
       <div class="actions">
@@ -1152,10 +1562,12 @@ function renderBlockList(){
     card.querySelector('[data-act=dup]').onclick = () => {
       state.blocks.push({...b, id: nextId()});
       renderBlockList(); renderAll();
+      triggerAutoSave();
     };
     card.querySelector('[data-act=del]').onclick = () => {
       state.blocks = state.blocks.filter(x => x.id !== b.id);
       renderBlockList(); renderAll();
+      triggerAutoSave();
     };
     card.querySelector('[data-act=edit]').onclick = () => {
       document.getElementById('blockName').value = b.name;
@@ -1169,14 +1581,37 @@ function renderBlockList(){
       }
       document.getElementById('blockTimeFrom').value = minToTime(b.timeFrom);
       document.getElementById('blockTimeTo').value = minToTime(b.timeTo);
+      
+      // Cargar colores del bloque
+      pendingBlockBgType = b.bgType || 'solid';
+      setBlockBgType(pendingBlockBgType);
+      
       pendingBlockColor = b.color;
       blockColorDot.style.background = b.color;
       blockColorHex.textContent = b.color.toUpperCase();
+      
+      pendingBlockGradColor1 = b.gradColor1 || '#F2A65A';
+      pendingBlockGradColor2 = b.gradColor2 || '#4FD1C5';
+      pendingBlockGradColor3 = b.gradColor3 || '#8E7CFF';
+      pendingBlockGradUse3Colors = b.gradUse3Colors || false;
+      pendingBlockGradDirection = b.gradDirection || 'to right';
+      
+      blockGradColor1Dot.style.background = pendingBlockGradColor1;
+      blockGradColor1Hex.textContent = pendingBlockGradColor1.toUpperCase();
+      blockGradColor2Dot.style.background = pendingBlockGradColor2;
+      blockGradColor2Hex.textContent = pendingBlockGradColor2.toUpperCase();
+      blockGradColor3Dot.style.background = pendingBlockGradColor3;
+      blockGradColor3Hex.textContent = pendingBlockGradColor3.toUpperCase();
+      document.getElementById('blockGradUse3Colors').checked = pendingBlockGradUse3Colors;
+      document.getElementById('blockGradDirection').value = pendingBlockGradDirection;
+      
       pendingBlockTextColor = b.textColor || '#FFFFFF';
       blockTextColorDot.style.background = pendingBlockTextColor;
       blockTextColorHex.textContent = pendingBlockTextColor.toUpperCase();
+      
       state.blocks = state.blocks.filter(x => x.id !== b.id);
       renderBlockList(); renderAll();
+      triggerAutoSave();
     };
     list.appendChild(card);
   });
@@ -1197,6 +1632,7 @@ document.getElementById('imgInput').addEventListener('change', (e) => {
         fixed: false
       });
       renderImageList(); renderImagesLayer();
+      triggerAutoSave();
     };
     reader.readAsDataURL(file);
   });
@@ -1240,11 +1676,13 @@ function renderImageList(){
       im.fixed = !im.fixed;
       renderImageList(); 
       renderImagesLayer();
+      triggerAutoSave();
     };
     
     row.querySelector('[data-act=del]').onclick = () => {
       state.images = state.images.filter(x => x.id !== im.id);
       renderImageList(); renderImagesLayer();
+      triggerAutoSave();
     };
     
     const opacitySlider = row.querySelector('.imgOpacity');
@@ -1255,18 +1693,21 @@ function renderImageList(){
         im.opacity = Number(e.target.value);
         row.querySelector('.imgOpacityVal').textContent = im.opacity + '%';
         renderImagesLayer();
+        triggerAutoSave();
       });
       
       rotSlider.addEventListener('input', (e) => {
         im.rot = Number(e.target.value);
         row.querySelector('.imgRotVal').textContent = im.rot + '°';
         renderImagesLayer();
+        triggerAutoSave();
       });
       
       row.querySelectorAll('.imgLayerBtn').forEach(btn => {
         btn.onclick = () => {
           im.layer = btn.dataset.layer;
           renderImageList(); renderImagesLayer();
+          triggerAutoSave();
         };
       });
     }
@@ -1299,9 +1740,7 @@ function renderImagesLayer(){
       <div class="rotate-handle" title="Rotar"></div>
       <div class="resize-handle" title="Cambiar tamaño"></div>`;
     
-    // Si está fijada, no añadir funcionalidad de arrastre
     if(!im.fixed) {
-      // drag
       let dragging=false, startX, startY, origX, origY;
       el.addEventListener('pointerdown', (e) => {
         if(e.target.classList.contains('resize-handle') || e.target.classList.contains('remove-handle') || e.target.classList.contains('rotate-handle')) return;
@@ -1314,10 +1753,10 @@ function renderImagesLayer(){
         im.x = origX + (e.clientX - startX);
         im.y = origY + (e.clientY - startY);
         el.style.left = im.x+'px'; el.style.top = im.y+'px';
+        triggerAutoSave();
       });
       el.addEventListener('pointerup', () => dragging=false);
       
-      // resize
       const handle = el.querySelector('.resize-handle');
       let resizing=false, rStartX, rStartY, origW, origH;
       handle.addEventListener('pointerdown', (e) => {
@@ -1331,10 +1770,10 @@ function renderImagesLayer(){
         im.w = Math.max(30, origW + (e.clientX - rStartX));
         im.h = Math.max(30, origH + (e.clientY - rStartY));
         el.style.width = im.w+'px'; el.style.height = im.h+'px';
+        triggerAutoSave();
       });
       handle.addEventListener('pointerup', () => resizing=false);
       
-      // rotate
       const rotHandle = el.querySelector('.rotate-handle');
       let rotating=false;
       rotHandle.addEventListener('pointerdown', (e) => {
@@ -1350,15 +1789,16 @@ function renderImagesLayer(){
         angle = ((angle % 360) + 360) % 360;
         im.rot = Math.round(angle);
         el.style.transform = `rotate(${im.rot}deg)`;
+        triggerAutoSave();
       });
       rotHandle.addEventListener('pointerup', () => { rotating=false; renderImagesLayer(); });
     }
     
-    // remove siempre funciona
     el.querySelector('.remove-handle').addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       state.images = state.images.filter(x => x.id !== im.id);
       renderImageList(); renderImagesLayer();
+      triggerAutoSave();
     });
     
     layer.appendChild(el);
@@ -1386,6 +1826,7 @@ document.getElementById('bgInput').addEventListener('change', (e) => {
       state.bgImgW = probe.naturalWidth;
       state.bgImgH = probe.naturalHeight;
       renderBg();
+      triggerAutoSave();
     };
     probe.src = reader.result;
   };
@@ -1397,37 +1838,43 @@ document.getElementById('removeBgBtn').onclick = () => {
   state.bgImgW = null; state.bgImgH = null;
   document.getElementById('bgThumbRow').style.display = 'none';
   renderBg();
+  triggerAutoSave();
 };
 document.getElementById('bgBlur').addEventListener('input', (e) => {
   state.bgBlur = Number(e.target.value);
   document.getElementById('bgBlurVal').textContent = state.bgBlur+'px';
   renderBg();
+  triggerAutoSave();
 });
 document.getElementById('bgTint').addEventListener('input', (e) => {
   state.bgTint = Number(e.target.value);
   document.getElementById('bgTintVal').textContent = state.bgTint+'%';
   renderBg();
+  triggerAutoSave();
 });
 document.getElementById('bgZoom').addEventListener('input', (e) => {
   state.bgZoom = Number(e.target.value);
   document.getElementById('bgZoomVal').textContent = state.bgZoom+'%';
   renderBg();
+  triggerAutoSave();
 });
 document.getElementById('bgPosX').addEventListener('input', (e) => {
   state.bgPosX = Number(e.target.value);
   document.getElementById('bgPosXVal').textContent = state.bgPosX+'%';
   renderBg();
+  triggerAutoSave();
 });
 document.getElementById('bgPosY').addEventListener('input', (e) => {
   state.bgPosY = Number(e.target.value);
   document.getElementById('bgPosYVal').textContent = state.bgPosY+'%';
   renderBg();
+  triggerAutoSave();
 });
 window.addEventListener('resize', () => renderBg());
 function renderBg(){
-  const layer = document.getElementById('bgLayer');
-  const img = document.getElementById('bgImgEl');
-  const tint = document.getElementById('bgTintLayer');
+  const layer = document.getElementById('horarioBgLayer');
+  const img = document.getElementById('horarioBgImg');
+  const tint = document.getElementById('horarioBgTint');
   layer.style.filter = `blur(${state.bgBlur}px)`;
   tint.style.background = `rgba(15,20,32,${state.bgTint/100})`;
 
@@ -1458,8 +1905,20 @@ function renderBg(){
 
 /* ---------------- poster style ---------------- */
 const captureAreaEl = document.getElementById('captureArea');
+const posterSolidBg = document.getElementById('posterSolidBg');
+
 function applyPosterStyle(){
-  captureAreaEl.style.background = state.posterBg;
+  // Aplicar fondo de la planilla (sólido o degradado)
+  let bgStyle = state.posterBg;
+  if (state.posterBgType === 'gradient') {
+    const colors = [state.posterGradColor1, state.posterGradColor2];
+    if (state.posterGradUse3Colors && state.posterGradColor3) {
+      colors.push(state.posterGradColor3);
+    }
+    bgStyle = getGradientCSS(colors, state.posterGradDirection);
+  }
+  posterSolidBg.style.background = bgStyle;
+  
   captureAreaEl.style.border = state.borderWidth > 0
     ? `${state.borderWidth}px solid ${state.borderColor}`
     : 'none';
@@ -1472,6 +1931,61 @@ function applyPosterStyle(){
   captureAreaEl.style.setProperty('--grid-line-w', state.gridLineWidth + 'px');
 }
 
+// Configurar toggles de tipo de fondo de la planilla
+const posterBgTypeToggle = document.getElementById('posterBgTypeToggle');
+const posterSolidColorDiv = document.getElementById('posterSolidColor');
+const posterGradientColorsDiv = document.getElementById('posterGradientColors');
+
+function setPosterBgType(type) {
+  state.posterBgType = type;
+  posterBgTypeToggle.querySelectorAll('.btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.bgtype === type);
+  });
+  posterSolidColorDiv.style.display = type === 'solid' ? 'block' : 'none';
+  posterGradientColorsDiv.style.display = type === 'gradient' ? 'block' : 'none';
+  applyPosterStyle();
+  triggerAutoSave();
+}
+
+posterBgTypeToggle.querySelectorAll('.btn').forEach(btn => {
+  btn.onclick = () => setPosterBgType(btn.dataset.bgtype);
+});
+
+// Colores de la planilla
+function wirePosterColorBtn(btnId, dotId, hexId, stateKey, callback) {
+  const btn = document.getElementById(btnId);
+  const dot = document.getElementById(dotId);
+  const hexLabel = document.getElementById(hexId);
+  btn.onclick = () => {
+    openColorPicker(btn, state[stateKey], (hex) => {
+      state[stateKey] = hex;
+      dot.style.background = hex;
+      hexLabel.textContent = hex.toUpperCase();
+      if (callback) callback();
+      applyPosterStyle();
+      triggerAutoSave();
+    });
+  };
+}
+
+wirePosterColorBtn('posterBgBtn','posterBgDot','posterBgHex','posterBg');
+wirePosterColorBtn('posterGradColor1Btn','posterGradColor1Dot','posterGradColor1Hex','posterGradColor1');
+wirePosterColorBtn('posterGradColor2Btn','posterGradColor2Dot','posterGradColor2Hex','posterGradColor2');
+wirePosterColorBtn('posterGradColor3Btn','posterGradColor3Dot','posterGradColor3Hex','posterGradColor3');
+
+document.getElementById('posterGradUse3Colors').addEventListener('change', (e) => {
+  state.posterGradUse3Colors = e.target.checked;
+  applyPosterStyle();
+  triggerAutoSave();
+});
+
+document.getElementById('posterGradDirection').addEventListener('change', (e) => {
+  state.posterGradDirection = e.target.value;
+  applyPosterStyle();
+  triggerAutoSave();
+});
+
+// Otros estilos
 function wireStyleColorBtn(btnId, dotId, hexId, stateKey){
   const btn = document.getElementById(btnId);
   const dot = document.getElementById(dotId);
@@ -1482,10 +1996,10 @@ function wireStyleColorBtn(btnId, dotId, hexId, stateKey){
       dot.style.background = hex;
       hexLabel.textContent = hex.toUpperCase();
       applyPosterStyle();
+      triggerAutoSave();
     });
   };
 }
-wireStyleColorBtn('posterBgBtn','posterBgDot','posterBgHex','posterBg');
 wireStyleColorBtn('borderColorBtn','borderColorDot','borderColorHex','borderColor');
 wireStyleColorBtn('gridColorBtn','gridColorDot','gridColorHex','gridColor');
 wireStyleColorBtn('textColorBtn','textColorDot','textColorHex','textColor');
@@ -1494,15 +2008,18 @@ document.getElementById('borderWidth').addEventListener('input', e => {
   state.borderWidth = Number(e.target.value);
   document.getElementById('borderWidthVal').textContent = state.borderWidth + 'px';
   applyPosterStyle();
+  triggerAutoSave();
 });
 document.getElementById('fontSelect').addEventListener('change', e => {
   state.fontFamily = e.target.value;
   applyPosterStyle();
+  triggerAutoSave();
 });
 document.getElementById('gridLineWidth').addEventListener('input', e => {
   state.gridLineWidth = Number(e.target.value);
   document.getElementById('gridLineWidthVal').textContent = state.gridLineWidth + 'px';
   applyPosterStyle();
+  triggerAutoSave();
 });
 
 /* ---------------- footer sections ---------------- */
@@ -1545,6 +2062,7 @@ document.getElementById('addFootBtn').onclick = () => {
     document.getElementById('footItems').value='';
   }
   renderFootList(); renderFooterArea();
+  triggerAutoSave();
 };
 function renderFootList(){
   const list = document.getElementById('footList');
@@ -1561,6 +2079,7 @@ function renderFootList(){
     card.querySelector('button').onclick = () => {
       state.footerSections = state.footerSections.filter(x => x.id !== f.id);
       renderFootList(); renderFooterArea();
+      triggerAutoSave();
     };
     list.appendChild(card);
   });
@@ -1592,6 +2111,7 @@ function renderFooterArea(){
           if(f.doneWeeks.includes(w)) f.doneWeeks = f.doneWeeks.filter(x=>x!==w);
           else f.doneWeeks.push(w);
           renderFooterArea();
+          triggerAutoSave();
         };
       });
       area.appendChild(sec);
@@ -1616,6 +2136,7 @@ document.getElementById('addTodoBtn').onclick = () => {
   state.todos.push({ id: nextId(), text, done: false });
   input.value = '';
   renderTodoSidebar(); renderTodoArea();
+  triggerAutoSave();
 };
 document.getElementById('todoInput').addEventListener('keydown', (e) => {
   if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('addTodoBtn').click(); }
@@ -1638,10 +2159,12 @@ function renderTodoSidebar(){
     row.querySelector('input[type=checkbox]').onchange = (e) => {
       t.done = e.target.checked;
       renderTodoSidebar(); renderTodoArea();
+      triggerAutoSave();
     };
     row.querySelector('[data-act=del]').onclick = () => {
       state.todos = state.todos.filter(x => x.id !== t.id);
       renderTodoSidebar(); renderTodoArea();
+      triggerAutoSave();
     };
     list.appendChild(row);
   });
@@ -1662,6 +2185,7 @@ function renderTodoArea(){
     li.onclick = () => {
       t.done = !t.done;
       renderTodoSidebar(); renderTodoArea();
+      triggerAutoSave();
     };
     ul.appendChild(li);
   });
@@ -1672,14 +2196,17 @@ function renderTodoArea(){
 document.getElementById('weeksEnabled').addEventListener('change', (e) => {
   state.weeksEnabled = e.target.checked;
   renderWeeksArea();
+  triggerAutoSave();
 });
 document.getElementById('weeksStart').addEventListener('change', (e) => {
   state.weeksStart = e.target.value;
   renderWeeksArea();
+  triggerAutoSave();
 });
 document.getElementById('weeksCount').addEventListener('input', (e) => {
   state.weeksCount = Math.max(1, Number(e.target.value) || 1);
   renderWeeksArea();
+  triggerAutoSave();
 });
 function weekDateLabel(startStr, weekIdx){
   if(!startStr) return '';
@@ -1713,12 +2240,28 @@ function renderWeeksArea(){
       if(state.weeksDone.includes(w)) state.weeksDone = state.weeksDone.filter(x=>x!==w);
       else state.weeksDone.push(w);
       renderWeeksArea();
+      triggerAutoSave();
     };
   });
   area.appendChild(block);
 }
 
 /* ---------------- grid + blocks rendering ---------------- */
+function timeToMin(str){
+  const [h,m] = str.split(':').map(Number);
+  return h*60+m;
+}
+function minToTime(min){
+  const h = Math.floor(min/60), m = min%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function fmtLabel(min){
+  const h = Math.floor(min/60), m = min%60;
+  const suffix = h < 12 ? 'am' : 'pm';
+  let h12 = h % 12; if(h12===0) h12=12;
+  return h12 + (m ? ':'+String(m).padStart(2,'0') : '') + suffix;
+}
+
 function renderGrid(){
   const wrap = document.getElementById('gridWrap');
   wrap.innerHTML = '';
@@ -1727,7 +2270,7 @@ function renderGrid(){
   const rowsCount = totalMinutes / state.interval;
   const bodyHeight = rowsCount * ROW_H;
 
-  // hour column — lives outside the bordered block, so the border starts after it
+  // hour column
   const timeCol = document.createElement('div');
   timeCol.className = 'time-col';
   timeCol.style.width = TIME_COL_W+'px';
@@ -1752,7 +2295,7 @@ function renderGrid(){
   timeCol.appendChild(timeLabels);
   wrap.appendChild(timeCol);
 
-  // bordered block: day headers + day columns only (no hours inside)
+  // bordered block
   const daysBlock = document.createElement('div');
   daysBlock.className = 'days-block';
 
@@ -1787,6 +2330,10 @@ function renderGrid(){
 
   const blocksLayer = document.createElement('div');
   blocksLayer.className = 'blocks-layer';
+  
+  // Agrupar bloques por día y franja horaria para distribución
+  const daySegments = {};
+  
   state.blocks.forEach(b => {
     const tFrom = Math.max(b.timeFrom, state.gridStart);
     const tTo = Math.min(b.timeTo, state.gridEnd);
@@ -1800,27 +2347,54 @@ function renderGrid(){
       const startColPos = days.indexOf(seg.dayFrom);
       const endColPos = days.indexOf(seg.dayTo);
       if(startColPos === -1 || endColPos === -1) return;
-      const left = startColPos * CELL_W;
-      const width = (endColPos - startColPos + 1) * CELL_W;
-      const top = (tFrom - state.gridStart)/state.interval*ROW_H;
-      const height = (tTo - tFrom)/state.interval*ROW_H;
+      
+      for(let d = startColPos; d <= endColPos; d++){
+        const key = `${d}_${tFrom}_${tTo}`;
+        if(!daySegments[key]) daySegments[key] = [];
+        daySegments[key].push({ ...b, col: d, tFrom, tTo });
+      }
+    });
+  });
+
+  // Renderizar bloques con distribución horizontal
+  Object.values(daySegments).forEach(blocksInSlot => {
+    const count = blocksInSlot.length;
+    const col = blocksInSlot[0].col;
+    const tFrom = blocksInSlot[0].tFrom;
+    const tTo = blocksInSlot[0].tTo;
+    
+    const left = col * CELL_W;
+    const top = (tFrom - state.gridStart)/state.interval * ROW_H;
+    const height = (tTo - tFrom)/state.interval * ROW_H;
+    const totalWidth = CELL_W;
+    const padding = 3;
+    const gap = 2;
+    
+    const blockWidth = (totalWidth - (padding * 2) - (gap * (count - 1))) / count;
+    
+    blocksInSlot.forEach((block, index) => {
       const el = document.createElement('div');
       el.className = 'block';
-      el.style.left = (left+3)+'px';
-      el.style.width = (width-6)+'px';
-      el.style.top = (top+2)+'px';
-      el.style.height = (height-4)+'px';
-      el.style.background = b.color;
+      const xPos = left + padding + (blockWidth + gap) * index;
+      el.style.left = xPos + 'px';
+      el.style.width = blockWidth + 'px';
+      el.style.top = (top + 2) + 'px';
+      el.style.height = (height - 4) + 'px';
       
-      // Aplicar color de texto
-      const textColor = b.textColor || '#FFFFFF';
+      // Aplicar fondo (sólido o degradado)
+      const bg = getBlockBackground(block);
+      el.style.background = bg;
+      el.style.fontSize = Math.min(10, 10 - (count - 1) * 0.5) + 'px';
+      
+      const textColor = block.textColor || '#FFFFFF';
       el.innerHTML = `
-        <div class="bname" style="color:${textColor}">${escapeHtml(b.name)}</div>
-        <div class="btime" style="color:${textColor}">${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>
+        <div class="bname" style="color:${textColor}">${escapeHtml(block.name)}</div>
+        <div class="btime" style="color:${textColor}">${fmtLabel(block.timeFrom)}–${fmtLabel(block.timeTo)}</div>
       `;
       blocksLayer.appendChild(el);
     });
   });
+
   dayColumns.appendChild(blocksLayer);
   daysBlock.appendChild(dayColumns);
   wrap.appendChild(daysBlock);
@@ -1833,17 +2407,18 @@ function renderAll(){
   renderTodoArea();
   renderImagesLayer();
   renderBg();
+  applyPosterStyle();
 }
 
 /* ---------------- top-level controls ---------------- */
 document.getElementById('gridStart').addEventListener('change', e => {
-  state.gridStart = timeToMin(e.target.value); renderAll();
+  state.gridStart = timeToMin(e.target.value); renderAll(); triggerAutoSave();
 });
 document.getElementById('gridEnd').addEventListener('change', e => {
-  state.gridEnd = timeToMin(e.target.value); renderAll();
+  state.gridEnd = timeToMin(e.target.value); renderAll(); triggerAutoSave();
 });
 document.getElementById('interval').addEventListener('change', e => {
-  state.interval = Number(e.target.value); renderAll();
+  state.interval = Number(e.target.value); renderAll(); triggerAutoSave();
 });
 const titleInputEl = document.getElementById('titleInput');
 const titleDisplayEl = document.getElementById('titleDisplay');
@@ -1851,11 +2426,13 @@ const titleDisplayEl = document.getElementById('titleDisplay');
 titleInputEl.addEventListener('input', e => {
   state.title = e.target.value;
   titleDisplayEl.textContent = state.title;
+  triggerAutoSave();
 });
 
 titleDisplayEl.addEventListener('input', () => {
   state.title = titleDisplayEl.textContent;
   titleInputEl.value = state.title;
+  triggerAutoSave();
 });
 titleDisplayEl.addEventListener('blur', () => {
   if(!titleDisplayEl.textContent.trim()){
@@ -1871,7 +2448,7 @@ document.getElementById('downloadBtn').onclick = () => {
   btn.textContent = 'Generando...';
   const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
   ready.then(() => html2canvas(document.getElementById('captureArea'), {
-    backgroundColor: '#0f1420',
+    backgroundColor: null,
     scale: 2,
     useCORS: true,
     allowTaint: false,
@@ -1890,15 +2467,42 @@ document.getElementById('downloadBtn').onclick = () => {
   });
 };
 
+// Botones de persistencia
+document.getElementById('saveBtn').onclick = () => {
+  saveState();
+  document.getElementById('saveStatus').textContent = '✅ Guardado manualmente';
+  setTimeout(() => {
+    document.getElementById('saveStatus').textContent = 'Guardado automático activo';
+  }, 2000);
+};
+
+document.getElementById('resetBtn').onclick = resetState;
+
 /* ---------------- init ---------------- */
+const loaded = loadState();
+if (loaded) {
+  console.log('Datos cargados desde local storage');
+}
+
+// Inicializar toggles de fondo
+setPosterBgType(state.posterBgType || 'solid');
+setBlockBgType(pendingBlockBgType);
+
 renderDayToggles();
 populateDaySelects();
 renderBlockCustomDayToggles();
 renderBlockList();
 renderImageList();
 renderTodoSidebar();
-applyPosterStyle();
 renderAll();
+
+if (state.images && state.images.length > 0) {
+  renderImagesLayer();
+}
+
+setTimeout(() => {
+  saveState();
+}, 500);
 
 })();
 </script>
