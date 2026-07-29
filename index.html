@@ -247,13 +247,20 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .thumb{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
 
 /* ---------- capture area (the poster / schedule) ---------- */
-#captureWrap{display:inline-block;width:100%;overflow-x:auto;}
+#captureWrap{
+  display:inline-block;
+  width:100%;
+  overflow-x:auto;
+  overflow-y:visible;
+}
 .capture-area{
   position:relative;
   border-radius:14px;
   overflow:hidden;
   padding:28px 32px 34px;
-  min-width:760px;
+  display:inline-block;
+  min-width:400px;
+  transition:all 0.3s ease;
 }
 /* Fondo de la planilla (sólido o degradado) */
 .capture-area-solid-bg{
@@ -333,6 +340,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   display:flex;
   align-items:flex-start;
   isolation:isolate;
+  transition:all 0.3s ease;
 }
 .grid-scroll{position:relative;}
 .time-col{flex-shrink:0;display:flex;flex-direction:column;}
@@ -342,6 +350,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   border-radius:4px;
   background:var(--grid-bg-color, rgba(15,20,32,0.7));
   backdrop-filter:blur(4px);
+  transition:all 0.3s ease;
 }
 .grid-header{display:flex;border-bottom:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
 .day-header{
@@ -356,6 +365,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   padding:4px;
   background:var(--grid-tint, rgba(255,255,255,.06));
   backdrop-filter:blur(2px);
+  transition:all 0.3s ease;
 }
 .day-header:not(:first-child){border-left:var(--grid-line-w,1px) solid var(--grid-line, rgba(255,255,255,.12));}
 .grid-body{position:relative;display:flex;}
@@ -1047,8 +1057,8 @@ input[type="time"]::-webkit-datetime-edit-text {
 (function(){
 
 const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const CELL_W = 130, ROW_H = 30, HEADER_H = 40, TIME_COL_W = 68;
-const STORAGE_KEY = 'horario_constructor_data_v2';
+const BASE_CELL_W = 130, ROW_H = 30, HEADER_H = 40, TIME_COL_W = 68;
+const STORAGE_KEY = 'horario_constructor_data_v3';
 
 let state = {
   activeDays: [0,1,2,3,4],
@@ -1088,6 +1098,11 @@ let state = {
 };
 let idCounter = 1;
 function nextId(){ return 'id' + (idCounter++); }
+
+// Variable para controlar el ancho de celda dinámico
+let CELL_W = BASE_CELL_W;
+let MIN_CELL_W = 60;
+let MAX_CELL_W = 160;
 
 /* ---------------- PERSISTENCIA ---------------- */
 function saveState() {
@@ -1134,6 +1149,37 @@ function autoSave() {
 
 function triggerAutoSave() {
   autoSave();
+}
+
+/* ---------------- FUNCIÓN PARA CALCULAR TAMAÑO DINÁMICO ---------------- */
+function calculateCellWidth() {
+  const dayCount = state.activeDays.length;
+  if (dayCount === 0) return MIN_CELL_W;
+  
+  // Obtener el ancho disponible del contenedor
+  const mainEl = document.getElementById('main');
+  const availableWidth = mainEl ? mainEl.clientWidth - 40 : window.innerWidth - 60;
+  
+  // Restar el ancho de la columna de horas y padding
+  const paddingTotal = 50; // padding de la capture-area + márgenes
+  const timeColWidth = TIME_COL_W + 10;
+  const availableForDays = availableWidth - timeColWidth - paddingTotal - 20;
+  
+  // Calcular ancho ideal por día
+  let idealWidth = Math.floor(availableForDays / dayCount);
+  
+  // Limitar entre mínimo y máximo
+  let finalWidth = Math.max(MIN_CELL_W, Math.min(MAX_CELL_W, idealWidth));
+  
+  // Si hay muy pocos días, permitir que sean más grandes
+  if (dayCount <= 3) {
+    finalWidth = Math.min(MAX_CELL_W, Math.max(MIN_CELL_W, finalWidth * 1.2));
+  }
+  
+  // Asegurar que no sea menor que el mínimo
+  finalWidth = Math.max(MIN_CELL_W, finalWidth);
+  
+  return finalWidth;
 }
 
 /* ---------------- day toggles ---------------- */
@@ -1582,7 +1628,6 @@ function renderBlockList(){
       document.getElementById('blockTimeFrom').value = minToTime(b.timeFrom);
       document.getElementById('blockTimeTo').value = minToTime(b.timeTo);
       
-      // Cargar colores del bloque
       pendingBlockBgType = b.bgType || 'solid';
       setBlockBgType(pendingBlockBgType);
       
@@ -1870,7 +1915,7 @@ document.getElementById('bgPosY').addEventListener('input', (e) => {
   renderBg();
   triggerAutoSave();
 });
-window.addEventListener('resize', () => renderBg());
+window.addEventListener('resize', () => renderAll());
 function renderBg(){
   const layer = document.getElementById('horarioBgLayer');
   const img = document.getElementById('horarioBgImg');
@@ -2263,6 +2308,9 @@ function fmtLabel(min){
 }
 
 function renderGrid(){
+  // Calcular ancho de celda dinámico
+  CELL_W = calculateCellWidth();
+  
   const wrap = document.getElementById('gridWrap');
   wrap.innerHTML = '';
   const days = state.activeDays;
@@ -2384,12 +2432,15 @@ function renderGrid(){
       // Aplicar fondo (sólido o degradado)
       const bg = getBlockBackground(block);
       el.style.background = bg;
-      el.style.fontSize = Math.min(10, 10 - (count - 1) * 0.5) + 'px';
+      
+      // Ajustar tamaño de fuente según el ancho de celda
+      const fontSize = Math.max(7, Math.min(10, CELL_W / 13));
+      el.style.fontSize = fontSize + 'px';
       
       const textColor = block.textColor || '#FFFFFF';
       el.innerHTML = `
-        <div class="bname" style="color:${textColor}">${escapeHtml(block.name)}</div>
-        <div class="btime" style="color:${textColor}">${fmtLabel(block.timeFrom)}–${fmtLabel(block.timeTo)}</div>
+        <div class="bname" style="color:${textColor};font-size:${fontSize}px;">${escapeHtml(block.name)}</div>
+        <div class="btime" style="color:${textColor};font-size:${fontSize * 0.8}px;">${fmtLabel(block.timeFrom)}–${fmtLabel(block.timeTo)}</div>
       `;
       blocksLayer.appendChild(el);
     });
@@ -2398,9 +2449,23 @@ function renderGrid(){
   dayColumns.appendChild(blocksLayer);
   daysBlock.appendChild(dayColumns);
   wrap.appendChild(daysBlock);
+  
+  // Actualizar el tamaño del área de captura
+  updateCaptureAreaSize();
+}
+
+function updateCaptureAreaSize() {
+  const captureArea = document.getElementById('captureArea');
+  const gridWrap = document.getElementById('gridWrap');
+  if (gridWrap) {
+    // El tamaño se ajusta automáticamente por el contenido
+    captureArea.style.width = 'auto';
+  }
 }
 
 function renderAll(){
+  // Recalcular CELL_W antes de renderizar
+  CELL_W = calculateCellWidth();
   renderGrid();
   renderFooterArea();
   renderWeeksArea();
@@ -2477,6 +2542,11 @@ document.getElementById('saveBtn').onclick = () => {
 };
 
 document.getElementById('resetBtn').onclick = resetState;
+
+// Escuchar cambios de tamaño de ventana para recalcular
+window.addEventListener('resize', () => {
+  renderAll();
+});
 
 /* ---------------- init ---------------- */
 const loaded = loadState();
