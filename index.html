@@ -116,6 +116,8 @@ h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
 .btn-ghost{background:transparent;}
 .btn-sm{padding:6px 10px;font-size:12px;border-radius:6px;}
 .btn-danger{color:var(--danger);border-color:var(--danger);background:transparent;}
+.btn-success{color:var(--accent-2);border-color:var(--accent-2);background:transparent;}
+.btn-success:hover{background:var(--accent-2);color:var(--accent-ink);border-color:var(--accent-2);}
 .dayModeToggle .btn{flex:1;justify-content:center;}
 .dayModeToggle .btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
 
@@ -176,6 +178,7 @@ input[type=date]::-webkit-calendar-picker-indicator{
 textarea{resize:vertical;min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
 input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent);}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .dayToggles{display:flex;flex-wrap:wrap;gap:6px;}
 .dayToggle{
   padding:6px 9px;border:1px solid var(--border);border-radius:6px;
@@ -300,8 +303,8 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
   border:1px solid rgba(255,255,255,.25);
   pointer-events:auto;
 }
-.block .bname{font-family:inherit;font-weight:600;font-size:12.5px;line-height:1.25;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);}
-.block .btime{font-family:inherit;font-size:10px;color:rgba(255,255,255,.85);margin-top:2px;}
+.block .bname{font-family:inherit;font-weight:600;font-size:12.5px;line-height:1.25;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.block .btime{font-family:inherit;font-size:10px;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.4);}
 
 .footer-area{position:relative;z-index:2;margin-top:26px;}
 .weeks-area{position:relative;z-index:2;margin-top:20px;}
@@ -377,13 +380,28 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
 .floating-img{
   position:absolute;
   pointer-events:auto;
-  cursor:grab;
   border-radius:8px;
-  box-shadow:0 4px 16px rgba(0,0,0,.4);
   border:2px solid rgba(255,255,255,.5);
 }
+.floating-img.fixed{
+  border:2px solid transparent !important;
+  box-shadow:none !important;
+  cursor:default;
+}
+.floating-img.fixed .remove-handle,
+.floating-img.fixed .rotate-handle,
+.floating-img.fixed .resize-handle{
+  display:none !important;
+}
 .floating-img:active{cursor:grabbing;}
-.floating-img img{width:100%;height:100%;display:block;border-radius:6px;object-fit:cover;pointer-events:none;}
+.floating-img img{
+  width:100%;
+  height:100%;
+  display:block;
+  border-radius:6px;
+  object-fit:cover;
+  pointer-events:none;
+}
 .resize-handle{
   position:absolute;right:-6px;bottom:-6px;width:16px;height:16px;
   background:var(--accent);border-radius:50%;border:2px solid #fff;cursor:nwse-resize;
@@ -505,11 +523,22 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
             <input type="time" id="blockTimeTo" value="09:00">
           </label>
         </div>
-        <label class="field">Color del bloque</label>
-        <button class="colorSwatchBtn" id="blockColorBtn" type="button">
-          <span class="swatchDot" id="blockColorDot" style="background:#f2a65a"></span>
-          <span id="blockColorHex">#F2A65A</span>
-        </button>
+        
+        <div class="row2">
+          <label class="field">Color de fondo del bloque</label>
+          <label class="field">Color del texto</label>
+        </div>
+        <div class="row2">
+          <button class="colorSwatchBtn" id="blockColorBtn" type="button">
+            <span class="swatchDot" id="blockColorDot" style="background:#f2a65a"></span>
+            <span id="blockColorHex">#F2A65A</span>
+          </button>
+          <button class="colorSwatchBtn" id="blockTextColorBtn" type="button">
+            <span class="swatchDot" id="blockTextColorDot" style="background:#ffffff"></span>
+            <span id="blockTextColorHex">#FFFFFF</span>
+          </button>
+        </div>
+        
         <button class="btn btn-accent" id="addBlockBtn" type="button">+ Agregar bloque</button>
         <p class="hint">Para repetir el mismo bloque en otro día u horario, usá "Duplicar" en la lista y ajustá el día/hora de la copia.</p>
         <div id="blockList"></div>
@@ -523,7 +552,7 @@ input:focus, select:focus, textarea:focus{outline:none;border-color:var(--accent
           Subir imagen
           <input type="file" id="imgInput" accept="image/*" multiple style="display:none;">
         </label>
-        <p class="hint">Arrastrá las imágenes sobre la planilla para moverlas, la esquina inferior para cambiar el tamaño, y el punto de arriba para rotarlas. Debajo de cada miniatura podés ajustar opacidad y si va delante o detrás del horario.</p>
+        <p class="hint">Arrastrá las imágenes sobre la planilla para moverlas, la esquina inferior para cambiar el tamaño, y el punto de arriba para rotarlas. Usá "Fijar" para ocultar los controles y "Editar" para volver a mostrarlos.</p>
         <div id="imgList"></div>
       </div>
     </details>
@@ -1034,6 +1063,8 @@ document.addEventListener('click', (e) => {
 
 /* ---------------- block form ---------------- */
 let pendingBlockColor = '#F2A65A';
+let pendingBlockTextColor = '#FFFFFF';
+
 const blockColorBtn = document.getElementById('blockColorBtn');
 const blockColorDot = document.getElementById('blockColorDot');
 const blockColorHex = document.getElementById('blockColorHex');
@@ -1045,6 +1076,17 @@ blockColorBtn.onclick = () => {
   });
 };
 
+const blockTextColorBtn = document.getElementById('blockTextColorBtn');
+const blockTextColorDot = document.getElementById('blockTextColorDot');
+const blockTextColorHex = document.getElementById('blockTextColorHex');
+blockTextColorBtn.onclick = () => {
+  openColorPicker(blockTextColorBtn, pendingBlockTextColor, (hex) => {
+    pendingBlockTextColor = hex;
+    blockTextColorDot.style.background = hex;
+    blockTextColorHex.textContent = hex.toUpperCase();
+  });
+};
+
 document.getElementById('addBlockBtn').onclick = () => {
   const name = document.getElementById('blockName').value.trim();
   if(!name){ alert('Ponele un nombre al bloque.'); return; }
@@ -1053,8 +1095,13 @@ document.getElementById('addBlockBtn').onclick = () => {
   if(tFrom >= tTo){ alert('La hora "hasta" debe ser mayor que "desde".'); return; }
 
   const block = {
-    id: nextId(), name, color: pendingBlockColor,
-    timeFrom: tFrom, timeTo: tTo, dayMode: blockDayMode
+    id: nextId(), 
+    name, 
+    color: pendingBlockColor,
+    textColor: pendingBlockTextColor,
+    timeFrom: tFrom, 
+    timeTo: tTo, 
+    dayMode: blockDayMode
   };
 
   if(blockDayMode === 'range'){
@@ -1093,6 +1140,7 @@ function renderBlockList(){
     card.innerHTML = `
       <div class="top">
         <span class="swatchDot" style="background:${b.color}"></span>
+        <span class="swatchDot" style="background:${b.textColor || '#FFFFFF'}"></span>
         <span class="name">${escapeHtml(b.name)}</span>
       </div>
       <div class="meta">${blockDaysLabel(b)} · ${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>
@@ -1124,6 +1172,9 @@ function renderBlockList(){
       pendingBlockColor = b.color;
       blockColorDot.style.background = b.color;
       blockColorHex.textContent = b.color.toUpperCase();
+      pendingBlockTextColor = b.textColor || '#FFFFFF';
+      blockTextColorDot.style.background = pendingBlockTextColor;
+      blockTextColorHex.textContent = pendingBlockTextColor.toUpperCase();
       state.blocks = state.blocks.filter(x => x.id !== b.id);
       renderBlockList(); renderAll();
     };
@@ -1142,7 +1193,8 @@ document.getElementById('imgInput').addEventListener('change', (e) => {
       state.images.push({
         id: nextId(), src: reader.result,
         x: 20 + Math.random()*40, y: 20 + Math.random()*40,
-        w: 120, h: 120, rot: 0, opacity: 100, layer: 'front'
+        w: 120, h: 120, rot: 0, opacity: 100, layer: 'front',
+        fixed: false
       });
       renderImageList(); renderImagesLayer();
     };
@@ -1163,44 +1215,62 @@ function renderImageList(){
     row.innerHTML = `
       <div class="thumbRow">
         <img class="thumb" src="${im.src}">
-        <button class="btn btn-sm btn-danger" style="margin-left:auto;" data-act="del">Quitar</button>
+        <button class="btn btn-sm btn-success" style="margin-left:auto;" data-act="edit">${im.fixed ? 'Editar' : 'Fijar'}</button>
+        <button class="btn btn-sm btn-danger" data-act="del">Quitar</button>
       </div>
       <label class="field">Opacidad
         <div class="slider-line">
-          <input type="range" class="imgOpacity" min="5" max="100" value="${im.opacity}">
+          <input type="range" class="imgOpacity" min="5" max="100" value="${im.opacity}" ${im.fixed ? 'disabled' : ''}>
           <span class="slider-val imgOpacityVal">${im.opacity}%</span>
         </div>
       </label>
       <label class="field">Rotación
         <div class="slider-line">
-          <input type="range" class="imgRot" min="0" max="360" value="${im.rot}">
+          <input type="range" class="imgRot" min="0" max="360" value="${im.rot}" ${im.fixed ? 'disabled' : ''}>
           <span class="slider-val imgRotVal">${im.rot}°</span>
         </div>
       </label>
       <div class="mini-toggle">
-        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?'':' active'}" data-layer="front">Delante del horario</button>
-        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?' active':''}" data-layer="back">Detrás del horario</button>
+        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?'':' active'}" data-layer="front" ${im.fixed ? 'disabled' : ''}>Delante del horario</button>
+        <button type="button" class="btn btn-sm imgLayerBtn${im.layer==='back'?' active':''}" data-layer="back" ${im.fixed ? 'disabled' : ''}>Detrás del horario</button>
       </div>`;
+    
+    const editBtn = row.querySelector('[data-act=edit]');
+    editBtn.onclick = () => {
+      im.fixed = !im.fixed;
+      renderImageList(); 
+      renderImagesLayer();
+    };
+    
     row.querySelector('[data-act=del]').onclick = () => {
       state.images = state.images.filter(x => x.id !== im.id);
       renderImageList(); renderImagesLayer();
     };
-    row.querySelector('.imgOpacity').addEventListener('input', (e) => {
-      im.opacity = Number(e.target.value);
-      row.querySelector('.imgOpacityVal').textContent = im.opacity + '%';
-      renderImagesLayer();
-    });
-    row.querySelector('.imgRot').addEventListener('input', (e) => {
-      im.rot = Number(e.target.value);
-      row.querySelector('.imgRotVal').textContent = im.rot + '°';
-      renderImagesLayer();
-    });
-    row.querySelectorAll('.imgLayerBtn').forEach(btn => {
-      btn.onclick = () => {
-        im.layer = btn.dataset.layer;
-        renderImageList(); renderImagesLayer();
-      };
-    });
+    
+    const opacitySlider = row.querySelector('.imgOpacity');
+    const rotSlider = row.querySelector('.imgRot');
+    
+    if(!im.fixed) {
+      opacitySlider.addEventListener('input', (e) => {
+        im.opacity = Number(e.target.value);
+        row.querySelector('.imgOpacityVal').textContent = im.opacity + '%';
+        renderImagesLayer();
+      });
+      
+      rotSlider.addEventListener('input', (e) => {
+        im.rot = Number(e.target.value);
+        row.querySelector('.imgRotVal').textContent = im.rot + '°';
+        renderImagesLayer();
+      });
+      
+      row.querySelectorAll('.imgLayerBtn').forEach(btn => {
+        btn.onclick = () => {
+          im.layer = btn.dataset.layer;
+          renderImageList(); renderImagesLayer();
+        };
+      });
+    }
+    
     list.appendChild(row);
   });
 }
@@ -1210,75 +1280,87 @@ function renderImagesLayer(){
   const layerFront = document.getElementById('imagesLayerFront');
   layerBack.innerHTML = '';
   layerFront.innerHTML = '';
+  
   state.images.forEach(im => {
     const layer = im.layer === 'back' ? layerBack : layerFront;
     const el = document.createElement('div');
-    el.className = 'floating-img';
+    el.className = 'floating-img' + (im.fixed ? ' fixed' : '');
     el.style.left = im.x+'px';
     el.style.top = im.y+'px';
     el.style.width = im.w+'px';
     el.style.height = im.h+'px';
     el.style.opacity = (im.opacity/100);
     el.style.transform = `rotate(${im.rot}deg)`;
+    el.style.background = 'transparent';
+    el.style.padding = '0';
+    el.style.borderRadius = '8px';
     el.innerHTML = `<img src="${im.src}">
       <div class="remove-handle" title="Quitar">×</div>
       <div class="rotate-handle" title="Rotar"></div>
       <div class="resize-handle" title="Cambiar tamaño"></div>`;
-    // drag
-    let dragging=false, startX, startY, origX, origY;
-    el.addEventListener('pointerdown', (e) => {
-      if(e.target.classList.contains('resize-handle') || e.target.classList.contains('remove-handle') || e.target.classList.contains('rotate-handle')) return;
-      dragging = true; startX = e.clientX; startY = e.clientY;
-      origX = im.x; origY = im.y;
-      el.setPointerCapture(e.pointerId);
-    });
-    el.addEventListener('pointermove', (e) => {
-      if(!dragging) return;
-      im.x = origX + (e.clientX - startX);
-      im.y = origY + (e.clientY - startY);
-      el.style.left = im.x+'px'; el.style.top = im.y+'px';
-    });
-    el.addEventListener('pointerup', () => dragging=false);
-    // resize
-    const handle = el.querySelector('.resize-handle');
-    let resizing=false, rStartX, rStartY, origW, origH;
-    handle.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      resizing = true; rStartX = e.clientX; rStartY = e.clientY;
-      origW = im.w; origH = im.h;
-      handle.setPointerCapture(e.pointerId);
-    });
-    handle.addEventListener('pointermove', (e) => {
-      if(!resizing) return;
-      im.w = Math.max(30, origW + (e.clientX - rStartX));
-      im.h = Math.max(30, origH + (e.clientY - rStartY));
-      el.style.width = im.w+'px'; el.style.height = im.h+'px';
-    });
-    handle.addEventListener('pointerup', () => resizing=false);
-    // rotate
-    const rotHandle = el.querySelector('.rotate-handle');
-    let rotating=false;
-    rotHandle.addEventListener('pointerdown', (e) => {
-      e.stopPropagation();
-      rotating = true;
-      rotHandle.setPointerCapture(e.pointerId);
-    });
-    rotHandle.addEventListener('pointermove', (e) => {
-      if(!rotating) return;
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
-      let angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180/Math.PI + 90;
-      angle = ((angle % 360) + 360) % 360;
-      im.rot = Math.round(angle);
-      el.style.transform = `rotate(${im.rot}deg)`;
-    });
-    rotHandle.addEventListener('pointerup', () => { rotating=false; renderImagesLayer(); });
-    // remove
+    
+    // Si está fijada, no añadir funcionalidad de arrastre
+    if(!im.fixed) {
+      // drag
+      let dragging=false, startX, startY, origX, origY;
+      el.addEventListener('pointerdown', (e) => {
+        if(e.target.classList.contains('resize-handle') || e.target.classList.contains('remove-handle') || e.target.classList.contains('rotate-handle')) return;
+        dragging = true; startX = e.clientX; startY = e.clientY;
+        origX = im.x; origY = im.y;
+        el.setPointerCapture(e.pointerId);
+      });
+      el.addEventListener('pointermove', (e) => {
+        if(!dragging) return;
+        im.x = origX + (e.clientX - startX);
+        im.y = origY + (e.clientY - startY);
+        el.style.left = im.x+'px'; el.style.top = im.y+'px';
+      });
+      el.addEventListener('pointerup', () => dragging=false);
+      
+      // resize
+      const handle = el.querySelector('.resize-handle');
+      let resizing=false, rStartX, rStartY, origW, origH;
+      handle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        resizing = true; rStartX = e.clientX; rStartY = e.clientY;
+        origW = im.w; origH = im.h;
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', (e) => {
+        if(!resizing) return;
+        im.w = Math.max(30, origW + (e.clientX - rStartX));
+        im.h = Math.max(30, origH + (e.clientY - rStartY));
+        el.style.width = im.w+'px'; el.style.height = im.h+'px';
+      });
+      handle.addEventListener('pointerup', () => resizing=false);
+      
+      // rotate
+      const rotHandle = el.querySelector('.rotate-handle');
+      let rotating=false;
+      rotHandle.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        rotating = true;
+        rotHandle.setPointerCapture(e.pointerId);
+      });
+      rotHandle.addEventListener('pointermove', (e) => {
+        if(!rotating) return;
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+        let angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180/Math.PI + 90;
+        angle = ((angle % 360) + 360) % 360;
+        im.rot = Math.round(angle);
+        el.style.transform = `rotate(${im.rot}deg)`;
+      });
+      rotHandle.addEventListener('pointerup', () => { rotating=false; renderImagesLayer(); });
+    }
+    
+    // remove siempre funciona
     el.querySelector('.remove-handle').addEventListener('pointerdown', (e) => {
       e.stopPropagation();
       state.images = state.images.filter(x => x.id !== im.id);
       renderImageList(); renderImagesLayer();
     });
+    
     layer.appendChild(el);
   });
 }
@@ -1729,7 +1811,13 @@ function renderGrid(){
       el.style.top = (top+2)+'px';
       el.style.height = (height-4)+'px';
       el.style.background = b.color;
-      el.innerHTML = `<div class="bname">${escapeHtml(b.name)}</div><div class="btime">${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>`;
+      
+      // Aplicar color de texto
+      const textColor = b.textColor || '#FFFFFF';
+      el.innerHTML = `
+        <div class="bname" style="color:${textColor}">${escapeHtml(b.name)}</div>
+        <div class="btime" style="color:${textColor}">${fmtLabel(b.timeFrom)}–${fmtLabel(b.timeTo)}</div>
+      `;
       blocksLayer.appendChild(el);
     });
   });
@@ -1781,9 +1869,6 @@ titleDisplayEl.addEventListener('keydown', e => {
 document.getElementById('downloadBtn').onclick = () => {
   const btn = document.getElementById('downloadBtn');
   btn.textContent = 'Generando...';
-  // Esperar a que las fuentes web terminen de cargar; si html2canvas captura
-  // antes de tiempo, o intenta leer las reglas CSS de una hoja externa sin
-  // CORS, puede rechazar la promesa y dejar la descarga sin efecto.
   const ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
   ready.then(() => html2canvas(document.getElementById('captureArea'), {
     backgroundColor: '#0f1420',
